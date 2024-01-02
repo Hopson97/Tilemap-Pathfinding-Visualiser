@@ -25,8 +25,7 @@ int main()
 
     TimeStep fixed_updater{50};
     Profiler profiler;
-
-    Array2D<int> ints{100, 100};
+    bool show_profiler = false;
 
     Application app;
 
@@ -40,6 +39,10 @@ int main()
             if (e.type == sf::Event::Closed)
             {
                 window.close();
+            }
+            else if (e.type == sf::Event::KeyReleased && e.key.code == sf::Keyboard::F1)
+            {
+                show_profiler = !show_profiler;
             }
         }
         auto dt = clock.restart();
@@ -70,7 +73,10 @@ int main()
 
         // Show profiler
         profiler.end_frame();
-        profiler.gui();
+        if (show_profiler)
+        {
+            profiler.gui();
+        }
 
         // End frame...
         ImGui::SFML::Render(window);

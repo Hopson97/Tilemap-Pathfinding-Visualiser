@@ -3,6 +3,8 @@
 #include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/System/Clock.hpp>
 
+#include "TileMap.h"
+
 class Application
 {
   public:
@@ -14,4 +16,5 @@ class Application
     void on_render(sf::RenderWindow& window);
 
   private:
+    TileMap tiles_;
 };

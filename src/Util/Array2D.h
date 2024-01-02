@@ -27,6 +27,23 @@ class Array2D
         return data_[index(x, y)];
     }
 
+    T& get(int index)
+    {
+        assert(index >= 0 && index < WIDTH * HEIGHT * PerData);
+        return data_[index];
+    }
+
+    const T& get(int index) const
+    {
+        assert(index >= 0 && index < WIDTH * HEIGHT * PerData);
+        return data_[index];
+    }
+
+    constexpr T* data()
+    {
+        return data_.data();
+    }
+
     void set(int x, int y, const T& data)
     {
         assert(contains(x, y));
@@ -38,10 +55,14 @@ class Array2D
         return x >= 0 && x < WIDTH && y >= 0 && y < HEIGHT;
     }
 
-  private:
     unsigned index(int x, int y)
     {
-        return data_[(y * WIDTH + x) * PerData];
+        return (y * WIDTH + x) * PerData;
+    }
+
+    size_t size()
+    {
+        return data_.size();
     }
 
   private:

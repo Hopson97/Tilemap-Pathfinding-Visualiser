@@ -18,4 +18,5 @@ void Application::on_fixed_update(sf::Time dt)
 
 void Application::on_render(sf::RenderWindow& window)
 {
+    tiles_.draw(window, sf::RenderStates::Default);
 }

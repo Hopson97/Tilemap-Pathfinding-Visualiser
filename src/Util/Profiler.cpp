@@ -54,10 +54,6 @@ void Profiler::gui()
 {
     if (ImGui::Begin("Profiler"))
     {
-
-        ImGui::Separator();
-
-        ImGui::TextColored({0, 0.6f, 0.188f, 1}, "Average Times");
         ImGui::Text("Frame: %.3fms", average_.asSeconds() * 1000.0f);
         for (auto& [name, section] : profiler_sections_)
         {
