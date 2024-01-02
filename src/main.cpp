@@ -14,6 +14,7 @@
 int main()
 {
     sf::RenderWindow window({1280, 720}, "SFML");
+    window.setPosition({85, 75});
     window.setVerticalSyncEnabled(true);
     window.setActive(true);
 
@@ -27,7 +28,7 @@ int main()
     Profiler profiler;
     bool show_profiler = false;
 
-    Application app;
+    Application app{window};
 
     sf::Clock clock;
     while (window.isOpen())
@@ -35,7 +36,7 @@ int main()
         for (sf::Event e{}; window.pollEvent(e);)
         {
             ImGui::SFML::ProcessEvent(e);
-            app.on_event(window, e);
+            app.on_event(e);
             if (e.type == sf::Event::Closed)
             {
                 window.close();
@@ -64,7 +65,7 @@ int main()
             fixed_update_profiler.end_section();
         }
         // Render
-        window.clear();
+        window.clear({100, 200, 255});
         {
             auto& render_profiler = profiler.begin_section("Render");
             app.on_render(window);

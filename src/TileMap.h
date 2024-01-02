@@ -5,17 +5,26 @@
 
 #include "Util/Array2D.h"
 
-constexpr float TILE_SIZE = 32.0f;
+constexpr float TILE_SIZE = 16.0f;
 
+constexpr int WIDTH = 158;
+constexpr int HEIGHT = 88;
 
+sf::Vector2i world_to_tile_position(const sf::Vector2f world_position);
 
 class TileMap
 {
   public:
     TileMap();
 
+    void set_tile_colour(const sf::Vector2i& tile_position, sf::Color colour);
+    void set_tile_texture_rect(const sf::Vector2i& tile_position, const sf::FloatRect& rect);
+
     void draw(sf::RenderTarget& render_target, const sf::RenderStates& states);
+    void draw_grid(sf::RenderTarget& render_target);
 
   private:
     Array2D<sf::Vertex, 4> tile_vertices_;
+    std::vector<sf::Vertex> grid_vertices_;
+
 };
