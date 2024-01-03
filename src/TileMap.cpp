@@ -1,5 +1,9 @@
 #include "TileMap.h"
 
+#include <iostream>
+
+#include "Util/Util.h"
+
 namespace
 {
     void add_tile(Array2D<sf::Vertex, 4>& tile_vertices, const sf::Vector2i& tile_position)
@@ -26,7 +30,7 @@ TileMap::TileMap()
     // Create the actual tilemap
     for (int y = 0; y < HEIGHT; y++)
     {
-        for (int x = 0; x < HEIGHT; x++)
+        for (int x = 0; x < WIDTH; x++)
         {
             add_tile(tile_vertices_, {x, y});
         }

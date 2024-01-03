@@ -7,8 +7,8 @@
 
 constexpr float TILE_SIZE = 16.0f;
 
-constexpr int WIDTH = 158;
-constexpr int HEIGHT = 88;
+constexpr int WIDTH = 150;
+constexpr int HEIGHT = 80;
 
 sf::Vector2i world_to_tile_position(const sf::Vector2f world_position);
 

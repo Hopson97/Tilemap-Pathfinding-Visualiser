@@ -9,14 +9,18 @@
 Application::Application(const sf::RenderWindow& window)
     : p_window(&window)
 {
+    camera_.view.setCenter(TILE_SIZE * WIDTH / 2 + TILE_SIZE / 2,
+                           TILE_SIZE * HEIGHT / 2 + TILE_SIZE / 2);
 }
 
 void Application::on_event(const sf::Event& e)
 {
+    static bool mouse_down = false;
     if (e.type == sf::Event::MouseButtonReleased)
     {
-        auto tile_position =
-            world_to_tile_position(p_window->mapPixelToCoords({e.mouseButton.x, e.mouseButton.y}, camera_.view));
+        auto tile_position = world_to_tile_position(
+            p_window->mapPixelToCoords({e.mouseButton.x, e.mouseButton.y}, camera_.view));
+
     }
 
     else if (e.type == sf::Event::MouseWheelScrolled)
@@ -24,6 +28,7 @@ void Application::on_event(const sf::Event& e)
         camera_.zoom_level += e.mouseWheelScroll.delta / 15.0f;
         camera_.zoom_level = std::clamp(camera_.zoom_level, 0.5f, 5.0f);
     }
+
 }
 
 void Application::on_update(sf::Time dt)
@@ -31,7 +36,7 @@ void Application::on_update(sf::Time dt)
     auto mouse = sf::Mouse::getPosition(*p_window);
     auto tile_position = world_to_tile_position(p_window->mapPixelToCoords(mouse, camera_.view));
 
-    if (sf::Mouse::isButtonPressed(sf::Mouse::Left) )
+    if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
     {
         tiles_.set_tile_colour(tile_position, selected_colour_);
     }
@@ -84,11 +89,10 @@ void Application::on_render(sf::RenderWindow& window)
     // Set up camera
     camera_.view.setSize(sf::Vector2f{window.getSize()} / camera_.zoom_level);
 
-    
     // Draw things relative to the camera view
     window.setView(camera_.view);
     tiles_.draw(window, sf::RenderStates::Default);
-   // if (sf::Keyboard::isKeyPressed(sf::Keyboard::F2))
+    // if (sf::Keyboard::isKeyPressed(sf::Keyboard::F2))
     {
         tiles_.draw_grid(window);
     }
