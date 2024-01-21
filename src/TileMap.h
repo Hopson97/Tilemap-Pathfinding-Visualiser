@@ -1,30 +1,48 @@
 #pragma once
 
-#include <SFML/Graphics/RenderTarget.hpp>
-#include <SFML/Graphics/Vertex.hpp>
+#include <array>
+
+#include <SFML/Graphics/Rect.hpp>
 
 #include "Util/Array2D.h"
 
-constexpr float TILE_SIZE = 16.0f;
+enum class TileType
+{
+    Grass = 0,
+    Sand,
 
-constexpr int WIDTH = 150;
-constexpr int HEIGHT = 80;
+    Empty,
+    OOB,
+    NUM_TILES
+};
 
-sf::Vector2i world_to_tile_position(const sf::Vector2f world_position);
+struct Tile
+{
+    void init(const char* name, TileType type, int cost, bool connect_to_neighbours);
 
-class TileMap
+    TileType type = TileType::Empty;
+    const char* name;
+    int cost = 1;
+    sf::FloatRect texture;
+
+    sf::FloatRect get_normalised_texture_rect(const sf::Vector2f& atlas_size) const;
+
+    bool connect_to_neighbours = false;
+};
+
+struct TileMap
 {
   public:
     TileMap();
 
-    void set_tile_colour(const sf::Vector2i& tile_position, sf::Color colour);
-    void set_tile_texture_rect(const sf::Vector2i& tile_position, const sf::FloatRect& rect);
+    const Tile& get_tile(TileType type) const;
+    const Tile& get_tile(const sf::Vector2i& tile_position) const;
+    void set_tile(const sf::Vector2i& tile_position, TileType type);
 
-    void draw(sf::RenderTarget& render_target, const sf::RenderStates& states);
-    void draw_grid(sf::RenderTarget& render_target);
+    std::array<Tile, (int)TileType::NUM_TILES> tile_types;
+
 
   private:
-    Array2D<sf::Vertex, 4> tile_vertices_;
-    std::vector<sf::Vertex> grid_vertices_;
-
+    Tile oob_tile_;
+    Array2D<TileType> tiles;
 };

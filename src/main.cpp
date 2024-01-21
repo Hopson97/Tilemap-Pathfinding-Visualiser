@@ -26,7 +26,7 @@ int main()
 
     TimeStep fixed_updater{50};
     Profiler profiler;
-    bool show_profiler = false;
+    bool show_debug_info = false;
 
     Application app{window};
 
@@ -43,7 +43,7 @@ int main()
             }
             else if (e.type == sf::Event::KeyReleased && e.key.code == sf::Keyboard::F1)
             {
-                show_profiler = !show_profiler;
+                show_debug_info = !show_debug_info;
             }
         }
         auto dt = clock.restart();
@@ -68,13 +68,13 @@ int main()
         window.clear({100, 200, 255});
         {
             auto& render_profiler = profiler.begin_section("Render");
-            app.on_render(window);
+            app.on_render(window, show_debug_info);
             render_profiler.end_section();
         }
 
         // Show profiler
         profiler.end_frame();
-        if (show_profiler)
+        if (show_debug_info)
         {
             profiler.gui();
         }

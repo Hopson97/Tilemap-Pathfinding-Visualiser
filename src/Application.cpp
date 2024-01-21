@@ -6,11 +6,20 @@
 
 #include <imgui.h>
 
+#include "Util/Util.h"
+namespace
+{
+    const std::array<sf::Vector2i, 4> TILE_OFFSETS = {sf::Vector2i{0, 1}, {-1, 0}, {1, 0}, {0, -1}};
+}
+
 Application::Application(const sf::RenderWindow& window)
     : p_window(&window)
+//, tile_map_(WIDTH, HEIGHT)
 {
     camera_.view.setCenter(TILE_SIZE * WIDTH / 2 + TILE_SIZE / 2,
                            TILE_SIZE * HEIGHT / 2 + TILE_SIZE / 2);
+
+    tile_map_texture_.loadFromFile("assets/Textures/Tiles.png");
 }
 
 void Application::on_event(const sf::Event& e)
@@ -20,29 +29,32 @@ void Application::on_event(const sf::Event& e)
     {
         auto tile_position = world_to_tile_position(
             p_window->mapPixelToCoords({e.mouseButton.x, e.mouseButton.y}, camera_.view));
-
     }
 
     else if (e.type == sf::Event::MouseWheelScrolled)
     {
         camera_.zoom_level += e.mouseWheelScroll.delta / 15.0f;
-        camera_.zoom_level = std::clamp(camera_.zoom_level, 0.5f, 5.0f);
+        camera_.zoom_level = std::clamp(camera_.zoom_level, 0.2f, 5.0f);
     }
-
 }
 
 void Application::on_update(sf::Time dt)
 {
-    auto mouse = sf::Mouse::getPosition(*p_window);
-    auto tile_position = world_to_tile_position(p_window->mapPixelToCoords(mouse, camera_.view));
 
-    if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+    if (!ImGui::GetIO().WantCaptureMouse)
     {
-        tiles_.set_tile_colour(tile_position, selected_colour_);
-    }
-    else if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
-    {
-        tiles_.set_tile_colour(tile_position, sf::Color::Transparent);
+        auto mouse = sf::Mouse::getPosition(*p_window);
+        auto tile_position =
+            world_to_tile_position(p_window->mapPixelToCoords(mouse, camera_.view));
+
+        if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+        {
+            set_tile_to_selected(tile_position);
+        }
+        else if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
+        {
+            remove_tile(tile_position);
+        }
     }
 
     // Move camera
@@ -73,16 +85,32 @@ void Application::on_fixed_update(sf::Time dt)
 {
 }
 
-void Application::on_render(sf::RenderWindow& window)
+void Application::on_render(sf::RenderWindow& window, bool show_debug_info)
 {
-    if (ImGui::Begin("Select Colour"))
+    // Show the GUI for selecting different tile types
+    auto native_handle = tile_map_texture_.getNativeHandle();
+    ImTextureID imgui_id = (void*)(intptr_t)native_handle;
+    if (ImGui::Begin("Select Tile"))
     {
-        // clang-format off
-        if (ImGui::Button("Red")) { selected_colour_ = sf::Color::Red; }
-        if (ImGui::Button("Green")) { selected_colour_ = sf::Color::Green; }
-        if (ImGui::Button("Blue")) { selected_colour_ = sf::Color::Blue; }
-        if (ImGui::Button("Black")) { selected_colour_ = sf::Color::Black; }
-        // clang-format on
+        for (int i = 0; i < (int)TileType::Empty; i++)
+        {
+            if (i % 3 != 0)
+            {
+                ImGui::SameLine();
+            }
+            auto tile = tile_map_.tile_types[i];
+            auto rect = tile.get_normalised_texture_rect(sf::Vector2f{tile_map_texture_.getSize()});
+
+            if (ImGui::ImageButton(tile.name, imgui_id, {32, 32}, {rect.left, rect.top},
+                                   {rect.width, rect.height}))
+            {
+                selected_tile = tile.type;
+            }
+            if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+            {
+                ImGui::SetTooltip("Tile: %s\nWeight: %d", tile.name, tile.cost);
+            }
+        }
     }
     ImGui::End();
 
@@ -91,19 +119,72 @@ void Application::on_render(sf::RenderWindow& window)
 
     // Draw things relative to the camera view
     window.setView(camera_.view);
-    tiles_.draw(window, sf::RenderStates::Default);
-    // if (sf::Keyboard::isKeyPressed(sf::Keyboard::F2))
+
+    sf::RenderStates states;
+    states.texture = &tile_map_texture_;
+    tilemap_renderer_.draw(window, states);
+
+    if (!sf::Keyboard::isKeyPressed(sf::Keyboard::F2))
     {
-        tiles_.draw_grid(window);
+        tilemap_renderer_.draw_grid(window);
     }
 
     // Draw things relative to the window
     window.setView(window.getDefaultView());
 
-    if (ImGui::Begin("Info"))
+    if (show_debug_info)
     {
-        ImGui::TextSFMLVector2("Camera Position", camera_.view.getCenter());
-        ImGui::Text("Camera Zoom: %f", camera_.zoom_level);
+
+        if (ImGui::Begin("Info"))
+        {
+            ImGui::TextSFMLVector2("Camera Position", camera_.view.getCenter());
+            ImGui::Text("Camera Zoom: %f", camera_.zoom_level);
+        }
+        ImGui::End();
     }
-    ImGui::End();
+}
+
+void Application::set_tile_to_selected(const sf::Vector2i& tile_position)
+{
+    tile_map_.set_tile(tile_position, selected_tile);
+    tilemap_renderer_.set_tile_colour(tile_position, sf::Color::White);
+
+    update_tile_variation(tile_position);
+
+    for (int i = 0; i < TILE_OFFSETS.size(); i++)
+    {
+        update_tile_variation(TILE_OFFSETS[i] + tile_position);
+    }
+}
+
+void Application::remove_tile(const sf::Vector2i& tile_position)
+{
+    tile_map_.set_tile(tile_position, TileType::Empty);
+    tilemap_renderer_.set_tile_colour(tile_position, sf::Color::Transparent);
+
+    for (int i = 0; i < TILE_OFFSETS.size(); i++)
+    {
+        update_tile_variation(TILE_OFFSETS[i] + tile_position);
+    }
+}
+
+void Application::update_tile_variation(const sf::Vector2i& tile_position)
+{
+    auto tile = tile_map_.get_tile(tile_position);
+
+    int variation = 0;
+    if (tile.connect_to_neighbours)
+    {
+        for (int i = 0; i < TILE_OFFSETS.size(); i++)
+        {
+            auto neighbour = tile_map_.get_tile(TILE_OFFSETS[i] + tile_position);
+            if (neighbour.type != TileType::Empty)
+            {
+                variation += static_cast<int>(std::pow(2, i));
+            }
+        }
+    }
+    auto texture = tile.texture;
+    texture.left = variation * TEXTURE_SIZE;
+    tilemap_renderer_.set_tile_texture_rect(tile_position, texture);
 }

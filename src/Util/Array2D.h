@@ -44,25 +44,30 @@ class Array2D
         return data_.data();
     }
 
-    void set(int x, int y, const T& data)
+    void set(int x, int y, const T& value)
     {
         assert(contains(x, y));
-        data_[index(x, y)] = data;
+        data_[index(x, y)] = value;
     }
 
-    bool contains(int x, int y)
+    bool contains(int x, int y) const
     {
         return x >= 0 && x < WIDTH && y >= 0 && y < HEIGHT;
     }
 
-    unsigned index(int x, int y)
+    size_t index(int x, int y) const
     {
         return (y * WIDTH + x) * PerData;
     }
 
-    size_t size()
+    size_t size() const
     {
         return data_.size();
+    }
+
+    void fill(const T& value)
+    {
+        std::fill(data_.begin(), data_.end(), value);
     }
 
   private:
