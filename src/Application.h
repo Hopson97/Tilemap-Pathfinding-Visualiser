@@ -8,6 +8,7 @@
 #include "TileMapRenderer.h"
 #include "TileMap.h"
 
+class Keyboard;
 
 struct Camera
 {
@@ -24,7 +25,7 @@ class Application
     Application(const sf::RenderWindow& window);
 
     void on_event(const sf::Event& e);
-    void on_update(sf::Time dt);
+    void on_update(const Keyboard& keyboard, sf::Time dt);
     void on_fixed_update(sf::Time dt);
     void on_render(sf::RenderWindow& window, bool show_debug_info);
 

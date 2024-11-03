@@ -1,13 +1,9 @@
 # Linux
-/bin
-Hoperria
 build/
 
 # Windows
 *.dll
 *.exe
-*.sln
-*.vcxproj
 *.filters
 *.user
 *.vs
@@ -21,3 +17,9 @@ Release/
 *.srctrlprj
 *.srctrldb
 *.srctrlbm
+
+# Vcpkg
+vcpkg_installed/
+
+pathfindng-visualiser/
+

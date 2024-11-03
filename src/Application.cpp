@@ -2,14 +2,17 @@
 
 #include <SFML/Window/Event.hpp>
 
-#include "Util/ImGuiExtension.h"
-
 #include <imgui.h>
 
+#include "Util/ImGuiExtension.h"
 #include "Util/Util.h"
+#include "Util/Keyboard.h"
+
 namespace
 {
     const std::array<sf::Vector2i, 4> TILE_OFFSETS = {sf::Vector2i{0, 1}, {-1, 0}, {1, 0}, {0, -1}};
+
+    constexpr static float CAMERA_CAMERA_SPEED = 100.0f;
 }
 
 Application::Application(const sf::RenderWindow& window)
@@ -38,7 +41,7 @@ void Application::on_event(const sf::Event& e)
     }
 }
 
-void Application::on_update(sf::Time dt)
+void Application::on_update(const Keyboard& keyboard, sf::Time dt)
 {
 
     if (!ImGui::GetIO().WantCaptureMouse)
@@ -58,23 +61,23 @@ void Application::on_update(sf::Time dt)
     }
 
     // Move camera
-    int speed = 15;
+    int CAMERA_SPEED = 15;
     sf::Vector2f movement;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+    if (keyboard.is_key_down(sf::Keyboard::W))
     {
-        movement.y -= speed;
+        movement.y -= CAMERA_SPEED;
     }
-    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+    else if (keyboard.is_key_down(sf::Keyboard::S))
     {
-        movement.y += speed;
+        movement.y += CAMERA_SPEED;
     }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+    if (keyboard.is_key_down(sf::Keyboard::A))
     {
-        movement.x -= speed;
+        movement.x -= CAMERA_SPEED;
     }
-    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+    else if (keyboard.is_key_down(sf::Keyboard::D))
     {
-        movement.x += speed;
+        movement.x += CAMERA_SPEED;
     }
     camera_.velocity += movement;
     camera_.view.move(camera_.velocity * dt.asSeconds());

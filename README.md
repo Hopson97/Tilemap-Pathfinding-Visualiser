@@ -1,10 +1,10 @@
-# the_game
+# Pathfinding Visualistor
 
 ## Building and Running
 
 ### Windows (Visual Studio)
 
-The easiest way to build is to use [vcpkg](https://vcpkg.io/en/index.html) and install SFML through this.
+The easiest way to build is to use [vcpkg](https://vcpkg.io/en/index.html) and install dependencies through this.
 
 ```bash
 vcpkg install sfml
@@ -12,29 +12,48 @@ vcpkg install imgui
 vcpkg integrate install
 ```
 
-Create a new visual studio C++ empty project, git clone the files, and copy them into the project directory.
-
-Select the "Show All Files" options in Solution Explorer, and right-click on the src/ and deps/ directory, and choose the "include in project options"
-
-Go into the project properties and under `C/C++ > General`, add the deps/ directory as an additional include directories.
-
-Finally, under `Linker > Input`, add OpenGL32.lib as an additional dependency.
+Then open the Visual Studio project file to build and run.
 
 ### Linux
 
-Install conan
+#### Pre-requisites
+
+Install Vcpkg and other required packages using your distribution's package manager:
 
 ```sh
-python3 -m pip install conan==1.57
+git clone https://github.com/microsoft/vcpkg.git
+cd vcpkg
+./bootstrap-vcpkg.sh
+
+# These are required to build some packages
+sudo apt install cmake make autoconf libtool pkg-config
+
+# The following are required for SFML
+sudo apt install libx11-dev xorg-dev freeglut3-dev libudev-dev
 ```
+
+Ensure paths are set correctly:
+
+```sh
+export VCPKG_ROOT=/path/to/vcpkg
+export PATH=$VCPKG_ROOT:$PATH
+```
+
+RECOMMENDED: Add the above lines to your `.bashrc` or `.zshrc` file:
+
+```sh
+echo 'export VCPKG_ROOT=/path/to/vcpkg' >> ~/.bashrc
+echo 'export PATH=$VCPKG_ROOT:$PATH' >> ~/.bashrc
+```
+
+#### Build and Run
 
 To build, at the root of the project:
 
 ```sh
-sh scripts/build.sh install
+vcpkg install # First time only
+sh scripts/build.sh
 ```
-
-The `install` argument is only needed for the first time compilation as this is what grabs the libraries from Conan
 
 To run, at the root of the project:
 
