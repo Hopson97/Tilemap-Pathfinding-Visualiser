@@ -8,8 +8,8 @@
 constexpr float TILE_SIZE = 32.0f;
 constexpr float TEXTURE_SIZE = 8.0f;
 
-constexpr int WIDTH = 150;
-constexpr int HEIGHT = 80;
+constexpr int TILE_MAP_WIDTH = 150;
+constexpr int TILE_MAP_HEIGHT = 80;
 
 sf::Vector2i world_to_tile_position(const sf::Vector2f world_position);
 

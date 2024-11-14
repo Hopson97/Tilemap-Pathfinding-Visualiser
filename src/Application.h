@@ -34,14 +34,18 @@ class Application
     void remove_tile(const sf::Vector2i& tile_position);
     void update_tile_variation(const sf::Vector2i& tile_position);
 
+    void set_tile_map_kind(TileMapKind kind);
+
     const sf::RenderWindow* p_window = nullptr;
 
     TileMapRenderer tilemap_renderer_;
     Camera camera_;
 
-
+    TileMapKind tile_map_kind_ = TileMapKind::SideView;
     TileMap tile_map_;
-    sf::Texture tile_map_texture_;
+    sf::Texture* p_active_texture_ = nullptr;
+    sf::Texture tile_textures_side_view_;
+    sf::Texture tile_textures_top_view_;
 
     TileType selected_tile = TileType::Grass;
 };

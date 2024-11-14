@@ -25,12 +25,12 @@ namespace
 } // namespace
 
 TileMapRenderer::TileMapRenderer()
-    : tile_vertices_(WIDTH, HEIGHT)
+    : tile_vertices_(TILE_MAP_WIDTH, TILE_MAP_HEIGHT)
 {
     // Create the actual tilemap
-    for (int y = 0; y < HEIGHT; y++)
+    for (int y = 0; y < TILE_MAP_HEIGHT; y++)
     {
-        for (int x = 0; x < WIDTH; x++)
+        for (int x = 0; x < TILE_MAP_WIDTH; x++)
         {
             add_tile(tile_vertices_, {x, y});
         }
@@ -38,15 +38,15 @@ TileMapRenderer::TileMapRenderer()
 
     // Create the grid lines
     sf::Color colour = sf::Color::Black;
-    for (int x = 0; x < WIDTH + 1; x++)
+    for (int x = 0; x < TILE_MAP_WIDTH + 1; x++)
     {
         grid_vertices_.push_back({{x * TILE_SIZE, 0}, colour});
-        grid_vertices_.push_back({{x * TILE_SIZE, HEIGHT * TILE_SIZE}, colour});
+        grid_vertices_.push_back({{x * TILE_SIZE, TILE_MAP_HEIGHT * TILE_SIZE}, colour});
     }
-    for (int y = 0; y < HEIGHT + 1; y++)
+    for (int y = 0; y < TILE_MAP_HEIGHT + 1; y++)
     {
         grid_vertices_.push_back({{0, y * TILE_SIZE}, colour});
-        grid_vertices_.push_back({{WIDTH * TILE_SIZE, y * TILE_SIZE}, colour});
+        grid_vertices_.push_back({{TILE_MAP_WIDTH * TILE_SIZE, y * TILE_SIZE}, colour});
     }
 }
 

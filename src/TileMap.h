@@ -16,9 +16,16 @@ enum class TileType
     NUM_TILES
 };
 
+enum class TileMapKind
+{
+    SideView,
+    TopDownView,
+};
+
 struct Tile
 {
-    void init(const char* name, TileType type, int cost, bool connect_to_neighbours);
+    void init(const char* name, TileType type, int cost, bool connect_to_neighbours_side_view,
+              bool connect_to_neighbours_top_down);
 
     TileType type = TileType::Empty;
     const char* name;
@@ -27,7 +34,8 @@ struct Tile
 
     sf::FloatRect get_normalised_texture_rect(const sf::Vector2f& atlas_size) const;
 
-    bool connect_to_neighbours = false;
+    bool connect_to_neighbours_side_view = false;
+    bool connect_to_neighbours_top_down = false;
 };
 
 struct TileMap

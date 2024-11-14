@@ -19,10 +19,13 @@ Application::Application(const sf::RenderWindow& window)
     : p_window(&window)
 //, tile_map_(WIDTH, HEIGHT)
 {
-    camera_.view.setCenter(TILE_SIZE * WIDTH / 2 + TILE_SIZE / 2,
-                           TILE_SIZE * HEIGHT / 2 + TILE_SIZE / 2);
+    camera_.view.setCenter(TILE_SIZE * TILE_MAP_WIDTH / 2 + TILE_SIZE / 2,
+                           TILE_SIZE * TILE_MAP_HEIGHT / 2 + TILE_SIZE / 2);
 
-    tile_map_texture_.loadFromFile("assets/Textures/Tiles.png");
+    tile_textures_side_view_.loadFromFile("assets/Textures/TilesSideView.png");
+    tile_textures_top_view_.loadFromFile("assets/Textures/TilesTopDown.png");
+
+    set_tile_map_kind(TileMapKind::SideView);
 }
 
 void Application::on_event(const sf::Event& e)
@@ -90,11 +93,14 @@ void Application::on_fixed_update(sf::Time dt)
 
 void Application::on_render(sf::RenderWindow& window, bool show_debug_info)
 {
+    assert(p_active_texture_);
+
     // Show the GUI for selecting different tile types
-    auto native_handle = tile_map_texture_.getNativeHandle();
+    auto native_handle = p_active_texture_->getNativeHandle();
     ImTextureID imgui_id = (void*)(intptr_t)native_handle;
-    if (ImGui::Begin("Select Tile"))
+    if (ImGui::Begin("Tools"))
     {
+        ImGui::Text("Select Tile");
         for (int i = 0; i < (int)TileType::Empty; i++)
         {
             if (i % 3 != 0)
@@ -102,7 +108,7 @@ void Application::on_render(sf::RenderWindow& window, bool show_debug_info)
                 ImGui::SameLine();
             }
             auto tile = tile_map_.tile_types[i];
-            auto rect = tile.get_normalised_texture_rect(sf::Vector2f{tile_map_texture_.getSize()});
+            auto rect = tile.get_normalised_texture_rect(sf::Vector2f{p_active_texture_->getSize()});
 
             if (ImGui::ImageButton(tile.name, imgui_id, {32, 32}, {rect.left, rect.top},
                                    {rect.width, rect.height}))
@@ -114,6 +120,19 @@ void Application::on_render(sf::RenderWindow& window, bool show_debug_info)
                 ImGui::SetTooltip("Tile: %s\nWeight: %d", tile.name, tile.cost);
             }
         }
+
+        ImGui::Separator();
+
+        if (ImGui::RadioButton("Side View", tile_map_kind_ == TileMapKind::SideView))
+        {
+            set_tile_map_kind(TileMapKind::SideView);
+        }
+
+        if (ImGui::RadioButton("Top View", tile_map_kind_ == TileMapKind::TopDownView))
+        {
+            set_tile_map_kind(TileMapKind::TopDownView);
+        }
+
     }
     ImGui::End();
 
@@ -124,7 +143,7 @@ void Application::on_render(sf::RenderWindow& window, bool show_debug_info)
     window.setView(camera_.view);
 
     sf::RenderStates states;
-    states.texture = &tile_map_texture_;
+    states.texture = p_active_texture_;
     tilemap_renderer_.draw(window, states);
 
     if (!sf::Keyboard::isKeyPressed(sf::Keyboard::F2))
@@ -176,7 +195,8 @@ void Application::update_tile_variation(const sf::Vector2i& tile_position)
     auto tile = tile_map_.get_tile(tile_position);
 
     int variation = 0;
-    if (tile.connect_to_neighbours)
+    if (tile_map_kind_ == TileMapKind::SideView && tile.connect_to_neighbours_side_view ||
+        tile_map_kind_ == TileMapKind::TopDownView && tile.connect_to_neighbours_top_down)
     {
         for (int i = 0; i < TILE_OFFSETS.size(); i++)
         {
@@ -190,4 +210,28 @@ void Application::update_tile_variation(const sf::Vector2i& tile_position)
     auto texture = tile.texture;
     texture.left = variation * TEXTURE_SIZE;
     tilemap_renderer_.set_tile_texture_rect(tile_position, texture);
+}
+
+void Application::set_tile_map_kind(TileMapKind kind)
+{
+    tile_map_kind_ = kind;
+    switch (kind)
+    {
+        case TileMapKind::SideView:
+            p_active_texture_ = &tile_textures_side_view_;
+            break;
+        case TileMapKind::TopDownView:
+            p_active_texture_ = &tile_textures_top_view_;
+            break;
+        default:
+            break;
+    }
+
+    for (int y = 0; y < TILE_MAP_HEIGHT; y++)
+    {
+        for (int x = 0; x < TILE_MAP_WIDTH; x++)
+        {
+            update_tile_variation({x, y});
+        }
+    }
 }
