@@ -1,20 +1,15 @@
 #pragma once
 
 #include <array>
+#include <filesystem>
 
 #include <SFML/Graphics/Rect.hpp>
+#include <SFML/Graphics/Texture.hpp>
 
 #include "Util/Array2D.h"
 
-enum class TileType
-{
-    Grass = 0,
-    Sand,
 
-    Empty,
-    OOB,
-    NUM_TILES
-};
+using TileId = int16_t;
 
 enum class TileMapKind
 {
@@ -22,35 +17,42 @@ enum class TileMapKind
     TopDownView,
 };
 
-struct Tile
+/**
+*   Data about a tile type - used as a flyweight.
+*/
+struct TileType
 {
-    void init(const char* name, TileType type, int cost, bool connect_to_neighbours_side_view,
-              bool connect_to_neighbours_top_down);
+    TileType(TileId id, std::string name, int index, int cost, bool connect_to_neighbours);
 
-    TileType type = TileType::Empty;
-    const char* name;
-    int cost = 1;
-    sf::FloatRect texture;
+    const TileId id = 0;
+    const sf::FloatRect texture_rect;
+
+    const std::string name;
+    const int cost = 1;
+
+    const bool connect_to_neighbours = false;
 
     sf::FloatRect get_normalised_texture_rect(const sf::Vector2f& atlas_size) const;
 
-    bool connect_to_neighbours_side_view = false;
-    bool connect_to_neighbours_top_down = false;
 };
 
+/**
+* The grid of tiles
+*/
 struct TileMap
 {
   public:
-    TileMap();
+    TileMap(const std::filesystem::path& tile_config);
 
-    const Tile& get_tile(TileType type) const;
-    const Tile& get_tile(const sf::Vector2i& tile_position) const;
-    void set_tile(const sf::Vector2i& tile_position, TileType type);
+    const TileType& get_tile(TileId tile_id) const;
+    const TileType& get_tile(const sf::Vector2i& tile_position) const;
+    void set_tile(const sf::Vector2i& tile_position, TileId tile_id);
 
-    std::array<Tile, (int)TileType::NUM_TILES> tile_types;
-
+    size_t tile_type_count() const;
+    const sf::Texture& texture() const;
 
   private:
-    Tile oob_tile_;
-    Array2D<TileType> tiles;
+    std::vector<TileType> tile_types_;
+    Array2D<TileId> tiles_;
+    sf::Texture tiles_texture_;
 };

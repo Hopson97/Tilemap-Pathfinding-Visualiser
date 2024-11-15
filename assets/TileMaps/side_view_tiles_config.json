@@ -1,0 +1,19 @@
+{
+  "name": "Platformer Tile Map",
+  "texture": "TilesSideView.png",
+  "tiles": [
+    {
+      "name": "Grass",
+      "texture_index": 0,
+      "pathing_cost": 1,
+      "connect_to_neighbours": true
+    },
+    {
+      "name": "Sand",
+      "texture_index": 1,
+      "pathing_cost": 2,
+      "connect_to_neighbours": true
+    }
+
+  ]
+}

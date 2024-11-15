@@ -27,5 +27,4 @@ class TileMapRenderer
   private:
     Array2D<sf::Vertex, 4> tile_vertices_;
     std::vector<sf::Vertex> grid_vertices_;
-
 };

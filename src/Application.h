@@ -2,6 +2,7 @@
 
 
 #include <SFML/Graphics/RenderWindow.hpp>
+#include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/System/Clock.hpp>
 
@@ -18,6 +19,16 @@ struct Camera
     float zoom_level = 1.0f;
 };
 
+struct TileMapWrapper
+{
+    TileMapWrapper(const std::filesystem::path& tile_config)
+        : tile_map(tile_config)
+    {
+    }
+
+    TileMap tile_map;
+    TileMapRenderer renderer;
+};
 
 class Application
 {
@@ -36,16 +47,19 @@ class Application
 
     void set_tile_map_kind(TileMapKind kind);
 
+    void set_selected_tile(TileId selection);
+
+  private:
     const sf::RenderWindow* p_window = nullptr;
 
-    TileMapRenderer tilemap_renderer_;
     Camera camera_;
 
     TileMapKind tile_map_kind_ = TileMapKind::SideView;
-    TileMap tile_map_;
-    sf::Texture* p_active_texture_ = nullptr;
-    sf::Texture tile_textures_side_view_;
-    sf::Texture tile_textures_top_view_;
+    TileMapWrapper tile_map_side_view_;
+    TileMapWrapper tile_map_top_view_;
+    TileMapWrapper* p_active_tile_map_ = nullptr;
 
-    TileType selected_tile = TileType::Grass;
+    TileId selected_tile_ = 0;
+
+    sf::RectangleShape placement_preview_;
 };

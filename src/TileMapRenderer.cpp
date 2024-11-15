@@ -37,7 +37,7 @@ TileMapRenderer::TileMapRenderer()
     }
 
     // Create the grid lines
-    sf::Color colour = sf::Color::Black;
+    sf::Color colour = {0, 0, 0, 128};
     for (int x = 0; x < TILE_MAP_WIDTH + 1; x++)
     {
         grid_vertices_.push_back({{x * TILE_SIZE, 0}, colour});
