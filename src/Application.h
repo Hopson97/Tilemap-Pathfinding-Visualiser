@@ -30,6 +30,12 @@ struct TileMapWrapper
     TileMapRenderer renderer;
 };
 
+struct EditorConfig
+{
+    TileId selected_tile = 0;
+    sf::Vector2i brush_size = {1, 1};
+};
+
 class Application
 {
   public:
@@ -49,6 +55,8 @@ class Application
 
     void set_selected_tile(TileId selection);
 
+    void draw_editor_ui();
+
   private:
     const sf::RenderWindow* p_window = nullptr;
 
@@ -59,7 +67,7 @@ class Application
     TileMapWrapper tile_map_top_view_;
     TileMapWrapper* p_active_tile_map_ = nullptr;
 
-    TileId selected_tile_ = 0;
-
     sf::RectangleShape placement_preview_;
+
+    EditorConfig editor_config_;
 };

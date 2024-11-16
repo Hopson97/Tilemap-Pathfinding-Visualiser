@@ -155,7 +155,6 @@
     <ClCompile Include="src\Util\ImGuiExtension.cpp" />
     <ClCompile Include="src\Util\Keyboard.cpp" />
     <ClCompile Include="src\Util\Profiler.cpp" />
-    <ClCompile Include="src\TileMapEditor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".clang-format" />
@@ -177,7 +176,6 @@
     <ClInclude Include="src\Util\Profiler.h" />
     <ClInclude Include="src\Util\TimeStep.h" />
     <ClInclude Include="src\Util\Util.h" />
-    <ClInclude Include="src\TileMapEditor.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />

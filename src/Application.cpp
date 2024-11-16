@@ -27,30 +27,14 @@ Application::Application(const sf::RenderWindow& window)
     set_tile_map_kind(TileMapKind::SideView);
     placement_preview_.setFillColor({255, 255, 255, 128});
 
-    // The side view map should be empty by default as the idea is to place platforms on the map
+    // Fill the map with empty tiles
     tile_map_side_view_.tile_map.fill_map(tile_map_side_view_.tile_map.empty_tile_id());
-
-    // The top-down view should be "full" by default.
-    tile_map_top_view_.tile_map.fill_map(0);
-    for (int y = 0; y < TILE_MAP_HEIGHT; y++)
-    {
-        for (int x = 0; x < TILE_MAP_WIDTH; x++)
-        {
-            tile_map_top_view_.renderer.set_tile_colour({x, y}, sf::Color::White);
-        }
-    }
+    tile_map_top_view_.tile_map.fill_map(tile_map_top_view_.tile_map.empty_tile_id());
 }
 
 void Application::on_event(const sf::Event& e)
 {
-    static bool mouse_down = false;
-    if (e.type == sf::Event::MouseButtonReleased)
-    {
-        auto tile_position = world_to_tile_position(
-            p_window->mapPixelToCoords({e.mouseButton.x, e.mouseButton.y}, camera_.view));
-    }
-
-    else if (e.type == sf::Event::MouseWheelScrolled)
+    if (e.type == sf::Event::MouseWheelScrolled)
     {
         camera_.zoom_level += e.mouseWheelScroll.delta / 15.0f;
         camera_.zoom_level = std::clamp(camera_.zoom_level, 0.2f, 5.0f);
@@ -75,11 +59,23 @@ void Application::on_update(const Keyboard& keyboard, sf::Time dt)
 
         if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
         {
-            set_tile_to_selected(tile_position);
+            for (int y = 0; y < editor_config_.brush_size.y; y++)
+            {
+                for (int x = 0; x < editor_config_.brush_size.x; x++)
+                {
+                    set_tile_to_selected(tile_position + sf::Vector2i{x, y});
+                }
+            }
         }
         else if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
         {
-            remove_tile(tile_position);
+            for (int y = 0; y < editor_config_.brush_size.y; y++)
+            {
+                for (int x = 0; x < editor_config_.brush_size.x; x++)
+                {
+                    remove_tile(tile_position + sf::Vector2i{x, y});
+                }
+            }
         }
     }
 
@@ -116,43 +112,7 @@ void Application::on_render(sf::RenderWindow& window, bool show_debug_info)
     assert(p_active_tile_map_);
     auto& tile_map = p_active_tile_map_->tile_map;
 
-    // Show the GUI for selecting different tile types
-    auto native_handle = tile_map.texture().getNativeHandle();
-    ImTextureID imgui_id = (void*)(intptr_t)native_handle;
-    if (ImGui::Begin("Tools"))
-    {
-        ImGui::Text("Select Tile");
-        for (int i = 0; i < (int)p_active_tile_map_->tile_map.tile_type_count() - 1; i++)
-        {
-            if (i % 4 != 0)
-            {
-                ImGui::SameLine();
-            }
-            auto& tile = tile_map.get_tile(i);
-            auto rect =
-                tile.get_normalised_texture_rect(sf::Vector2f{tile_map.texture().getSize()});
-            if (ImGui::ImageButton(tile.name.c_str(), imgui_id, {32, 32}, {rect.left, rect.top},
-                                   {rect.width, rect.height}))
-            {
-                set_selected_tile(tile.id);
-            }
-            if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-            {
-                ImGui::SetTooltip("Tile: %s\nWeight: %d", tile.name.c_str(), tile.cost);
-            }
-        }
-        ImGui::Separator();
-        if (ImGui::RadioButton("Side View", tile_map_kind_ == TileMapKind::SideView))
-        {
-            set_tile_map_kind(TileMapKind::SideView);
-        }
-
-        if (ImGui::RadioButton("Top View", tile_map_kind_ == TileMapKind::TopDownView))
-        {
-            set_tile_map_kind(TileMapKind::TopDownView);
-        }
-    }
-    ImGui::End();
+    draw_editor_ui();
 
     // Draw things relative to the camera view
     camera_.view.setSize(sf::Vector2f{window.getSize()} / camera_.zoom_level);
@@ -169,7 +129,20 @@ void Application::on_render(sf::RenderWindow& window, bool show_debug_info)
     }
 
     // Draw the preview
-    window.draw(placement_preview_);
+    if (!ImGui::GetIO().WantCaptureMouse)
+    {
+        auto current_preview_position = placement_preview_.getPosition();
+        for (int y = 0; y < editor_config_.brush_size.y; y++)
+        {
+            for (int x = 0; x < editor_config_.brush_size.x; x++)
+            {
+                placement_preview_.setPosition(current_preview_position +
+                                               sf::Vector2f{x * TILE_SIZE, y * TILE_SIZE});
+                window.draw(placement_preview_);
+            }
+        }
+        placement_preview_.setPosition(current_preview_position);
+    }
 
     // Draw things relative to the window (Imgui)
     window.setView(window.getDefaultView());
@@ -188,7 +161,7 @@ void Application::on_render(sf::RenderWindow& window, bool show_debug_info)
 void Application::set_tile_to_selected(const sf::Vector2i& tile_position)
 {
     assert(p_active_tile_map_);
-    p_active_tile_map_->tile_map.set_tile(tile_position, selected_tile_);
+    p_active_tile_map_->tile_map.set_tile(tile_position, editor_config_.selected_tile);
     p_active_tile_map_->renderer.set_tile_colour(tile_position, sf::Color::White);
 
     update_tile_variation(tile_position);
@@ -269,11 +242,84 @@ void Application::set_selected_tile(TileId selection)
     assert(p_active_tile_map_);
 
     // Update selection
-    selected_tile_ = selection;
+    editor_config_.selected_tile = selection;
 
     // Update the preview based on the new selection
     auto& tile_map = p_active_tile_map_->tile_map;
+    auto& tile_info = tile_map.get_tile(selection);
+    auto texture_rect = tile_info.texture_rect;
 
     placement_preview_.setTexture(&tile_map.texture());
-    placement_preview_.setTextureRect(sf::IntRect{tile_map.get_tile(selected_tile_).texture_rect});
+    placement_preview_.setTextureRect(sf::IntRect{texture_rect});
+}
+
+void Application::draw_editor_ui()
+{
+    auto& tile_map = p_active_tile_map_->tile_map;
+
+    auto tile_selection_ui = [&]()
+    {
+        auto native_handle = tile_map.texture().getNativeHandle();
+        ImTextureID imgui_id = (void*)(intptr_t)native_handle;
+        ImGui::Text("Select Tile");
+        for (int i = 0; i < (int)p_active_tile_map_->tile_map.tile_type_count() - 1; i++)
+        {
+            if (i % 4 != 0)
+            {
+                ImGui::SameLine();
+            }
+            auto& tile = tile_map.get_tile(i);
+
+            // Highlight the button if it is the selected one
+            auto button_colour = tile.id == editor_config_.selected_tile
+                                     ? ImVec4{0.8f, 0.8f, 0.8f, 0.8f}
+                                     : ImVec4{0, 0, 0, 0};
+            auto rect =
+                tile.get_normalised_texture_rect(sf::Vector2f{tile_map.texture().getSize()});
+            if (ImGui::ImageButton(tile.name.c_str(), imgui_id, {32, 32}, {rect.left, rect.top},
+                                   {rect.width, rect.height}, button_colour))
+            {
+                set_selected_tile(tile.id);
+            }
+            if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+            {
+                ImGui::SetTooltip("Tile: %s\nWeight: %d", tile.name.c_str(), tile.cost);
+            }
+        }
+    };
+
+    auto select_perspective_ui = [&]()
+    {
+        ImGui::Text("Select Perspective");
+        if (ImGui::RadioButton("Side View", tile_map_kind_ == TileMapKind::SideView))
+        {
+            set_tile_map_kind(TileMapKind::SideView);
+        }
+        ImGui::SameLine();
+
+        if (ImGui::RadioButton("Top View", tile_map_kind_ == TileMapKind::TopDownView))
+        {
+            set_tile_map_kind(TileMapKind::TopDownView);
+        }
+    };
+
+    auto sliders_ui = [&]()
+    {
+        ImGui::Text("Select Tile Brush Size");
+        ImGui::SliderInt("X Size", &editor_config_.brush_size.x, 1, 12);
+        ImGui::SliderInt("Y Size", &editor_config_.brush_size.y, 1, 12);
+    };
+
+    if (ImGui::Begin("Tools"))
+    {
+        select_perspective_ui();
+        ImGui::Separator();
+
+        tile_selection_ui();
+        ImGui::Separator();
+
+        ImGui::Separator();
+        sliders_ui();
+    }
+    ImGui::End();
 }
