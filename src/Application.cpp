@@ -26,6 +26,19 @@ Application::Application(const sf::RenderWindow& window)
                            TILE_SIZE * TILE_MAP_HEIGHT / 2 + TILE_SIZE / 2);
     set_tile_map_kind(TileMapKind::SideView);
     placement_preview_.setFillColor({255, 255, 255, 128});
+
+    // The side view map should be empty by default as the idea is to place platforms on the map
+    tile_map_side_view_.tile_map.fill_map(tile_map_side_view_.tile_map.empty_tile_id());
+
+    // The top-down view should be "full" by default.
+    tile_map_top_view_.tile_map.fill_map(0);
+    for (int y = 0; y < TILE_MAP_HEIGHT; y++)
+    {
+        for (int x = 0; x < TILE_MAP_WIDTH; x++)
+        {
+            tile_map_top_view_.renderer.set_tile_colour({x, y}, sf::Color::White);
+        }
+    }
 }
 
 void Application::on_event(const sf::Event& e)
@@ -109,9 +122,9 @@ void Application::on_render(sf::RenderWindow& window, bool show_debug_info)
     if (ImGui::Begin("Tools"))
     {
         ImGui::Text("Select Tile");
-        for (int i = 0; i < (int)p_active_tile_map_->tile_map.tile_type_count(); i++)
+        for (int i = 0; i < (int)p_active_tile_map_->tile_map.tile_type_count() - 1; i++)
         {
-            if (i % 3 != 0)
+            if (i % 4 != 0)
             {
                 ImGui::SameLine();
             }
@@ -189,7 +202,8 @@ void Application::set_tile_to_selected(const sf::Vector2i& tile_position)
 void Application::remove_tile(const sf::Vector2i& tile_position)
 {
     assert(p_active_tile_map_);
-    p_active_tile_map_->tile_map.set_tile(tile_position, 0);
+    p_active_tile_map_->tile_map.set_tile(tile_position,
+                                          p_active_tile_map_->tile_map.empty_tile_id());
     p_active_tile_map_->renderer.set_tile_colour(tile_position, sf::Color::Transparent);
 
     for (int i = 0; i < TILE_OFFSETS.size(); i++)
@@ -221,20 +235,24 @@ void Application::update_tile_variation(const sf::Vector2i& tile_position)
     p_active_tile_map_->renderer.set_tile_texture_rect(tile_position, texture_rect);
 }
 
-void Application::set_tile_map_kind(TileMapKind kind)
+void Application::set_tile_map_kind(TileMapKind map_kind)
 {
-    tile_map_kind_ = kind;
-    switch (kind)
+    switch (map_kind)
     {
+        // Set the current tile map to the "side view" version
         case TileMapKind::SideView:
             p_active_tile_map_ = &tile_map_side_view_;
             break;
+
+        // Set the current tile map to the "top view" version
         case TileMapKind::TopDownView:
             p_active_tile_map_ = &tile_map_top_view_;
             break;
+
         default:
             break;
     }
+    tile_map_kind_ = map_kind;
 
     for (int y = 0; y < TILE_MAP_HEIGHT; y++)
     {
@@ -258,5 +276,4 @@ void Application::set_selected_tile(TileId selection)
 
     placement_preview_.setTexture(&tile_map.texture());
     placement_preview_.setTextureRect(sf::IntRect{tile_map.get_tile(selected_tile_).texture_rect});
-
 }

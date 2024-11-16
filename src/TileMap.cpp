@@ -7,12 +7,13 @@
 
 #include "TileMapRenderer.h"
 
-TileType::TileType(TileId id, std::string name, int index, int cost, bool connect_to_neighbours)
+TileType::TileType(TileId id, std::string name, int index, int cost, bool connect_to_neighbours, bool block_pathing)
     : id(id)
     , texture_rect{0, static_cast<float>(index) * TEXTURE_SIZE, TEXTURE_SIZE, TEXTURE_SIZE}
     , name{name}
     , cost{cost}
     , connect_to_neighbours{connect_to_neighbours}
+    , block_pathing(block_pathing)
 {
 }
 
@@ -46,13 +47,23 @@ TileMap::TileMap(const std::filesystem::path& tile_config)
         int pathing_cost = tile["pathing_cost"];
         bool connect_to_neighbours = tile["connect_to_neighbours"];
 
+        bool block_pathing = false;
+        if (tile.contains("block_pathing"))
+        {
+            block_pathing = tile["block_pathing"];
+        }
+
         tile_types_.emplace_back(tile_types_.size(), name, texture_index, pathing_cost,
-                                connect_to_neighbours);
+                                     connect_to_neighbours, block_pathing);
     }
 
     // Add the "empty/error" tile and fill the map with it
     tile_types_.emplace_back(tile_types_.size(), "ERROR TILE", -1, -1, false);
-    tiles_.fill(tile_types_.back().id);
+}
+
+void TileMap::fill_map(TileId tile)
+{
+    tiles_.fill(tile);
 }
 
 void TileMap::set_tile(const sf::Vector2i& tile_position, TileId tile_id)
@@ -71,6 +82,11 @@ size_t TileMap::tile_type_count() const
 const sf::Texture& TileMap::texture() const
 {
     return tiles_texture_;
+}
+
+TileId TileMap::empty_tile_id() const
+{
+    return tile_types_.back().id;
 }
 
 const TileType& TileMap::get_tile(TileId tile_id) const

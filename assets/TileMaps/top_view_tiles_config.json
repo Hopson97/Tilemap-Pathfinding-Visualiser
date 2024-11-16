@@ -1,5 +1,5 @@
 {
-  "name": "Platformer Tile Map",
+  "name": "Top Down Tile Map",
   "texture": "TilesTopDownView.png",
   "tiles": [
     {
@@ -14,6 +14,5 @@
       "pathing_cost": 2,
       "connect_to_neighbours": true
     }
-
   ]
 }
