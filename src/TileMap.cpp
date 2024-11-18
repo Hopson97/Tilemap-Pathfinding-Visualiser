@@ -2,7 +2,6 @@
 
 #include <cassert>
 #include <fstream>
-#include <print>
 
 #include <nlohmann/json.hpp>
 
@@ -180,7 +179,6 @@ void TileMap::set_tile(const sf::Vector2i& tile_position, TileId tile_id, SetTil
             {
                 if (position != NO_POSITION)
                 {
-                    std::println("Removing tile at {} {}", position.x, position.y);
                     set_tile(position, start_finish_layer_empty_tile_, SetTileAction::Remove);
                 }
 

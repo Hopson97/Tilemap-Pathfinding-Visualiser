@@ -22,7 +22,7 @@ Application::Application(const sf::RenderWindow& window)
 {
     camera_.view.setCenter(TILE_SIZE * TILE_MAP_WIDTH / 2 + TILE_SIZE / 2,
                            TILE_SIZE * TILE_MAP_HEIGHT / 2 + TILE_SIZE / 2);
-    set_tile_map_kind(TileMapKind::SideView);
+    set_tile_map_kind(TileMapKind::TopDownView);
     placement_preview_.setFillColor({255, 255, 255, 128});
 }
 
@@ -39,11 +39,12 @@ void Application::on_event(const sf::Event& e)
     {
         if (!ImGui::GetIO().WantCaptureMouse)
         {
+            auto brush_size = get_brush_size();
             if (is_mouse_down && button_pressed == sf::Mouse::Button::Left)
             {
-                for (int y = 0; y < editor_config_.brush_size.y; y++)
+                for (int y = 0; y < brush_size.y; y++)
                 {
-                    for (int x = 0; x < editor_config_.brush_size.x; x++)
+                    for (int x = 0; x < brush_size.x; x++)
                     {
                         tile_map.set_tile(current_tile_position + sf::Vector2i{x, y},
                                           editor_config_.selected_tile);
@@ -52,9 +53,9 @@ void Application::on_event(const sf::Event& e)
             }
             else if (is_mouse_down && button_pressed == sf::Mouse::Button::Right)
             {
-                for (int y = 0; y < editor_config_.brush_size.y; y++)
+                for (int y = 0; y < brush_size.y; y++)
                 {
-                    for (int x = 0; x < editor_config_.brush_size.x; x++)
+                    for (int x = 0; x < brush_size.x; x++)
                     {
                         tile_map.remove_tile(current_tile_position + sf::Vector2i{x, y});
                     }
@@ -153,9 +154,10 @@ void Application::on_render(sf::RenderWindow& window, bool show_debug_info)
     if (!ImGui::GetIO().WantCaptureMouse)
     {
         auto current_preview_position = placement_preview_.getPosition();
-        for (int y = 0; y < editor_config_.brush_size.y; y++)
+        auto brush_size = get_brush_size();
+        for (int y = 0; y < brush_size.y; y++)
         {
-            for (int x = 0; x < editor_config_.brush_size.x; x++)
+            for (int x = 0; x < brush_size.x; x++)
             {
                 placement_preview_.setPosition(current_preview_position +
                                                sf::Vector2f{x * TILE_SIZE, y * TILE_SIZE});
@@ -218,6 +220,7 @@ void Application::set_selected_tile(TileId selection)
 
 void Application::draw_editor_ui()
 {
+    assert(p_active_tile_map_);
     auto& tile_map = *p_active_tile_map_;
 
     auto tile_selection_ui = [&]()
@@ -246,8 +249,8 @@ void Application::draw_editor_ui()
             }
             if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
             {
-                ImGui::SetTooltip("%s\n------------\nWeight: %d\nLayer: %s", tile.name.c_str(),
-                                  tile.cost,
+                ImGui::SetTooltip("%s\n------------\nWeight: %s\nLayer: %s", tile.name.c_str(),
+                                  tile.cost == -1 ? "N/A" : std::to_string(tile.cost).c_str(),
                                   [&]()
                                   {
                                       switch (tile.layer)
@@ -267,15 +270,17 @@ void Application::draw_editor_ui()
     auto select_perspective_ui = [&]()
     {
         ImGui::Text("Select Perspective");
-        if (ImGui::RadioButton("Side View", tile_map_kind_ == TileMapKind::SideView))
-        {
-            set_tile_map_kind(TileMapKind::SideView);
-        }
-        ImGui::SameLine();
 
-        if (ImGui::RadioButton("Top View", tile_map_kind_ == TileMapKind::TopDownView))
+        if (ImGui::RadioButton("Top-Down View", tile_map_kind_ == TileMapKind::TopDownView))
         {
             set_tile_map_kind(TileMapKind::TopDownView);
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::RadioButton("Side-On View", tile_map_kind_ == TileMapKind::SideView))
+        {
+            set_tile_map_kind(TileMapKind::SideView);
         }
     };
 
@@ -298,4 +303,13 @@ void Application::draw_editor_ui()
         sliders_ui();
     }
     ImGui::End();
+}
+
+sf::Vector2i Application::get_brush_size()
+{
+    assert(p_active_tile_map_);
+    auto& tile_map = *p_active_tile_map_;
+    return tile_map.tile_info(editor_config_.selected_tile).special != TileType::Special::No
+               ? sf::Vector2i{1, 1}
+               : editor_config_.brush_size;
 }

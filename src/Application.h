@@ -39,6 +39,9 @@ class Application
     void set_tile_map_kind(TileMapKind kind);
     void set_selected_tile(TileId selection);
     void draw_editor_ui();
+    
+    /// Gets the brush size, either will be the editor one or 1 if the tile is "special"
+    sf::Vector2i get_brush_size();
 
   private:
     const sf::RenderWindow* p_window = nullptr;
