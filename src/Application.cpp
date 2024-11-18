@@ -136,6 +136,7 @@ void Application::on_render(sf::RenderWindow& window, bool show_debug_info)
     auto& tile_map = *p_active_tile_map_;
 
     draw_editor_ui();
+    draw_pathfinding_ui();
 
     // Draw things relative to the camera view
     camera_.view.setSize(sf::Vector2f{window.getSize()} / camera_.zoom_level);
@@ -167,9 +168,15 @@ void Application::on_render(sf::RenderWindow& window, bool show_debug_info)
         placement_preview_.setPosition(current_preview_position);
     }
 
+    // Draw the pathfinding visualation
+    if (pathfinding_config_.draw_costs)
+    {
+        pathfinding_grid_.draw_costs(window);
+    }
+
     // Draw things relative to the window (Imgui)
     window.setView(window.getDefaultView());
-
+    
     if (show_debug_info)
     {
         if (ImGui::Begin("Info"))
@@ -301,6 +308,22 @@ void Application::draw_editor_ui()
 
         ImGui::Separator();
         sliders_ui();
+    }
+    ImGui::End();
+}
+
+void Application::draw_pathfinding_ui()
+{
+    assert(p_active_tile_map_);
+    auto& tile_map = *p_active_tile_map_;
+
+    if (ImGui::Begin("Pathfinding"))
+    {
+        if (ImGui::Button("Update costs"))
+        {
+            pathfinding_grid_.create_pathing_graph(tile_map, tile_map_kind_);
+        }
+        ImGui::Checkbox("Draw Costs", &pathfinding_config_.draw_costs);
     }
     ImGui::End();
 }

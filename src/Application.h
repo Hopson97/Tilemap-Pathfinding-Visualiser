@@ -9,6 +9,8 @@
 #include "TileMapRenderer.h"
 #include "TileMap.h"
 
+#include "Pathfinding/PathfindingGrid.h"
+
 class Keyboard;
 
 struct Camera
@@ -25,6 +27,11 @@ struct EditorConfig
     sf::Vector2i brush_size = {1, 1};
 };
 
+struct PathfindingConfig
+{
+    bool draw_costs = false;
+};
+
 class Application
 {
   public:
@@ -39,6 +46,7 @@ class Application
     void set_tile_map_kind(TileMapKind kind);
     void set_selected_tile(TileId selection);
     void draw_editor_ui();
+    void draw_pathfinding_ui();
     
     /// Gets the brush size, either will be the editor one or 1 if the tile is "special"
     sf::Vector2i get_brush_size();
@@ -57,4 +65,7 @@ class Application
     TileMapGrid grid_;
 
     EditorConfig editor_config_;
+
+    PathFindingGrid pathfinding_grid_;
+    PathfindingConfig pathfinding_config_;
 };
