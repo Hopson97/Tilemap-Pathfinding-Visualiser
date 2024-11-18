@@ -165,6 +165,13 @@ void TileMap::draw(sf::RenderTarget& render_target)
     renderer_foreground_.draw(render_target, states);
 }
 
+bool TileMap::is_empty(const sf::Vector2i& tile_position) const
+{
+    auto info = get_tiles_at(tile_position);
+    return info.background.id == empty_background_tile_ &&
+           info.foreground.id == empty_foreground_tile_;
+}
+
 void TileMap::set_tile(const sf::Vector2i& tile_position, TileId tile_id, SetTileAction action)
 {
     if (tiles_background_.contains(tile_position.x, tile_position.y))

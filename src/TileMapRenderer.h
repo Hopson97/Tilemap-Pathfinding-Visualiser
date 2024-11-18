@@ -32,7 +32,7 @@ class TileMapRenderer
     void set_tile_colour(const sf::Vector2i& tile_position, sf::Color colour);
     void set_tile_texture_rect(const sf::Vector2i& tile_position, const sf::FloatRect& rect);
 
-    void draw(sf::RenderTarget& render_target, const sf::RenderStates& states);
+    void draw(sf::RenderTarget& render_target, const sf::RenderStates& states = sf::RenderStates::Default);
 
   private:
     Array2D<sf::Vertex, 4> tile_vertices_;
