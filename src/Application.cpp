@@ -11,8 +11,6 @@
 
 namespace
 {
-    const std::array<sf::Vector2i, 4> TILE_OFFSETS = {sf::Vector2i{0, 1}, {-1, 0}, {1, 0}, {0, -1}};
-
     constexpr static float CAMERA_CAMERA_SPEED = 100.0f;
 } // namespace
 
@@ -26,58 +24,82 @@ Application::Application(const sf::RenderWindow& window)
                            TILE_SIZE * TILE_MAP_HEIGHT / 2 + TILE_SIZE / 2);
     set_tile_map_kind(TileMapKind::SideView);
     placement_preview_.setFillColor({255, 255, 255, 128});
-
-    // Fill the map with empty tiles
-    tile_map_side_view_.tile_map.fill_map(tile_map_side_view_.tile_map.empty_tile_id());
-    tile_map_top_view_.tile_map.fill_map(tile_map_top_view_.tile_map.empty_tile_id());
 }
 
 void Application::on_event(const sf::Event& e)
 {
+    assert(p_active_tile_map_);
+    auto& tile_map = *p_active_tile_map_;
+
+    static bool is_mouse_down = false;
+    static sf::Mouse::Button button_pressed;
+    static sf::Vector2i current_tile_position;
+
+    auto try_place_or_remove_tiles = [&]()
+    {
+        if (!ImGui::GetIO().WantCaptureMouse)
+        {
+            if (is_mouse_down && button_pressed == sf::Mouse::Button::Left)
+            {
+                for (int y = 0; y < editor_config_.brush_size.y; y++)
+                {
+                    for (int x = 0; x < editor_config_.brush_size.x; x++)
+                    {
+                        tile_map.set_tile(current_tile_position + sf::Vector2i{x, y},
+                                          editor_config_.selected_tile);
+                    }
+                }
+            }
+            else if (is_mouse_down && button_pressed == sf::Mouse::Button::Right)
+            {
+                for (int y = 0; y < editor_config_.brush_size.y; y++)
+                {
+                    for (int x = 0; x < editor_config_.brush_size.x; x++)
+                    {
+                        tile_map.remove_tile(current_tile_position + sf::Vector2i{x, y});
+                    }
+                }
+            }
+        }
+    };
+
     if (e.type == sf::Event::MouseWheelScrolled)
     {
         camera_.zoom_level += e.mouseWheelScroll.delta / 15.0f;
         camera_.zoom_level = std::clamp(camera_.zoom_level, 0.2f, 5.0f);
     }
+    else if (e.type == sf::Event::MouseButtonPressed)
+    {
+        is_mouse_down = true;
+        button_pressed = e.mouseButton.button;
+        current_tile_position = world_to_tile_position(
+            p_window->mapPixelToCoords({e.mouseButton.x, e.mouseButton.y}, camera_.view));
+        try_place_or_remove_tiles();
+    }
+    else if (e.type == sf::Event::MouseButtonReleased)
+    {
+        is_mouse_down = false;
+    }
 
     else if (e.type == sf::Event::MouseMoved)
     {
-        auto tile_position = world_to_tile_position(
+        auto new_tile_position = world_to_tile_position(
             p_window->mapPixelToCoords({e.mouseMove.x, e.mouseMove.y}, camera_.view));
-        placement_preview_.setPosition(sf::Vector2f{tile_position} * TILE_SIZE);
+
+        if (new_tile_position != current_tile_position)
+        {
+            current_tile_position = new_tile_position;
+            try_place_or_remove_tiles();
+        }
+
+        placement_preview_.setPosition(sf::Vector2f{current_tile_position} * TILE_SIZE);
     }
 }
 
 void Application::on_update(const Keyboard& keyboard, sf::Time dt)
 {
-
-    if (!ImGui::GetIO().WantCaptureMouse)
-    {
-        auto mouse = sf::Mouse::getPosition(*p_window);
-        auto tile_position =
-            world_to_tile_position(p_window->mapPixelToCoords(mouse, camera_.view));
-
-        if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
-        {
-            for (int y = 0; y < editor_config_.brush_size.y; y++)
-            {
-                for (int x = 0; x < editor_config_.brush_size.x; x++)
-                {
-                    set_tile_to_selected(tile_position + sf::Vector2i{x, y});
-                }
-            }
-        }
-        else if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
-        {
-            for (int y = 0; y < editor_config_.brush_size.y; y++)
-            {
-                for (int x = 0; x < editor_config_.brush_size.x; x++)
-                {
-                    remove_tile(tile_position + sf::Vector2i{x, y});
-                }
-            }
-        }
-    }
+    assert(p_active_tile_map_);
+    auto& tile_map = *p_active_tile_map_;
 
     // Move camera
     int CAMERA_SPEED = 15;
@@ -110,7 +132,7 @@ void Application::on_fixed_update(sf::Time dt)
 void Application::on_render(sf::RenderWindow& window, bool show_debug_info)
 {
     assert(p_active_tile_map_);
-    auto& tile_map = p_active_tile_map_->tile_map;
+    auto& tile_map = *p_active_tile_map_;
 
     draw_editor_ui();
 
@@ -118,14 +140,13 @@ void Application::on_render(sf::RenderWindow& window, bool show_debug_info)
     camera_.view.setSize(sf::Vector2f{window.getSize()} / camera_.zoom_level);
     window.setView(camera_.view);
 
-    sf::RenderStates states;
-    states.texture = &tile_map.texture();
-    p_active_tile_map_->renderer.draw(window, states);
+    // Draw the active tile map itself
+    tile_map.draw(window);
 
-    // Draw grid
+    // Draw the grid on-top
     if (!sf::Keyboard::isKeyPressed(sf::Keyboard::F2))
     {
-        p_active_tile_map_->renderer.draw_grid(window);
+        grid_.draw(window);
     }
 
     // Draw the preview
@@ -158,56 +179,6 @@ void Application::on_render(sf::RenderWindow& window, bool show_debug_info)
     }
 }
 
-void Application::set_tile_to_selected(const sf::Vector2i& tile_position)
-{
-    assert(p_active_tile_map_);
-    p_active_tile_map_->tile_map.set_tile(tile_position, editor_config_.selected_tile);
-    p_active_tile_map_->renderer.set_tile_colour(tile_position, sf::Color::White);
-
-    update_tile_variation(tile_position);
-
-    for (int i = 0; i < TILE_OFFSETS.size(); i++)
-    {
-        update_tile_variation(TILE_OFFSETS[i] + tile_position);
-    }
-}
-
-void Application::remove_tile(const sf::Vector2i& tile_position)
-{
-    assert(p_active_tile_map_);
-    p_active_tile_map_->tile_map.set_tile(tile_position,
-                                          p_active_tile_map_->tile_map.empty_tile_id());
-    p_active_tile_map_->renderer.set_tile_colour(tile_position, sf::Color::Transparent);
-
-    for (int i = 0; i < TILE_OFFSETS.size(); i++)
-    {
-        update_tile_variation(TILE_OFFSETS[i] + tile_position);
-    }
-}
-
-void Application::update_tile_variation(const sf::Vector2i& tile_position)
-{
-    assert(p_active_tile_map_);
-    auto& tile_map = p_active_tile_map_->tile_map;
-    auto tile = p_active_tile_map_->tile_map.get_tile(tile_position);
-
-    int variation = 0;
-    if (tile.connect_to_neighbours)
-    {
-        for (int i = 0; i < TILE_OFFSETS.size(); i++)
-        {
-            auto neighbour = tile_map.get_tile(TILE_OFFSETS[i] + tile_position);
-            if (neighbour.id != tile_map.tile_type_count() - 1)
-            {
-                variation += static_cast<int>(std::pow(2, i));
-            }
-        }
-    }
-    auto texture_rect = tile.texture_rect;
-    texture_rect.left = variation * TEXTURE_SIZE;
-    p_active_tile_map_->renderer.set_tile_texture_rect(tile_position, texture_rect);
-}
-
 void Application::set_tile_map_kind(TileMapKind map_kind)
 {
     switch (map_kind)
@@ -226,14 +197,6 @@ void Application::set_tile_map_kind(TileMapKind map_kind)
             break;
     }
     tile_map_kind_ = map_kind;
-
-    for (int y = 0; y < TILE_MAP_HEIGHT; y++)
-    {
-        for (int x = 0; x < TILE_MAP_WIDTH; x++)
-        {
-            update_tile_variation({x, y});
-        }
-    }
     set_selected_tile(0);
 }
 
@@ -245,8 +208,8 @@ void Application::set_selected_tile(TileId selection)
     editor_config_.selected_tile = selection;
 
     // Update the preview based on the new selection
-    auto& tile_map = p_active_tile_map_->tile_map;
-    auto& tile_info = tile_map.get_tile(selection);
+    auto& tile_map = *p_active_tile_map_;
+    auto& tile_info = tile_map.tile_info(selection);
     auto texture_rect = tile_info.texture_rect;
 
     placement_preview_.setTexture(&tile_map.texture());
@@ -255,20 +218,20 @@ void Application::set_selected_tile(TileId selection)
 
 void Application::draw_editor_ui()
 {
-    auto& tile_map = p_active_tile_map_->tile_map;
+    auto& tile_map = *p_active_tile_map_;
 
     auto tile_selection_ui = [&]()
     {
         auto native_handle = tile_map.texture().getNativeHandle();
         ImTextureID imgui_id = (void*)(intptr_t)native_handle;
         ImGui::Text("Select Tile");
-        for (int i = 0; i < (int)p_active_tile_map_->tile_map.tile_type_count() - 1; i++)
+        for (int tile_id = 0; tile_id < (int)tile_map.tile_type_count() - 2; tile_id++)
         {
-            if (i % 4 != 0)
+            if (tile_id % 4 != 0)
             {
                 ImGui::SameLine();
             }
-            auto& tile = tile_map.get_tile(i);
+            auto& tile = tile_map.tile_info(tile_id);
 
             // Highlight the button if it is the selected one
             auto button_colour = tile.id == editor_config_.selected_tile
@@ -283,7 +246,20 @@ void Application::draw_editor_ui()
             }
             if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
             {
-                ImGui::SetTooltip("Tile: %s\nWeight: %d", tile.name.c_str(), tile.cost);
+                ImGui::SetTooltip("%s\n------------\nWeight: %d\nLayer: %s", tile.name.c_str(),
+                                  tile.cost,
+                                  [&]()
+                                  {
+                                      switch (tile.layer)
+                                      {
+                                          case TileType::Layer::Background:
+                                              return "Background";
+                                          case TileType::Layer::Foreground:
+                                              return "Foreground";
+                                          default:
+                                              return "???";
+                                      }
+                                  }());
             }
         }
     };

@@ -6,13 +6,48 @@
       "name": "Grass",
       "texture_index": 0,
       "pathing_cost": 1,
-      "connect_to_neighbours": true
+      "connect_to_neighbours": true,
+      "layer": "background"
     },
     {
       "name": "Sand",
       "texture_index": 1,
       "pathing_cost": 2,
-      "connect_to_neighbours": true
+      "connect_to_neighbours": true,
+      "layer": "background"
+    },
+    {
+      "name": "Grey Wall",
+      "texture_index": 2,
+      "pathing_cost": -1,
+      "connect_to_neighbours": true,
+      "layer": "foreground"
+    },
+    {
+      "name": "Fence",
+      "texture_index": 3,
+      "pathing_cost": -1,
+      "connect_to_neighbours": true,
+      "layer": "foreground"
+    },
+
+
+
+    {
+      "name": "Start",
+      "texture_index": 4,
+      "pathing_cost": -1,
+      "connect_to_neighbours": false,
+      "layer": "foreground",
+      "special": "start"
+    },
+    {
+      "name": "Finish",
+      "texture_index": 5,
+      "pathing_cost": -1,
+      "connect_to_neighbours": false,
+      "layer": "foreground",
+      "special": "finish"
     }
   ]
 }

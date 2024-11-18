@@ -35,19 +35,6 @@ TileMapRenderer::TileMapRenderer()
             add_tile(tile_vertices_, {x, y});
         }
     }
-
-    // Create the grid lines
-    sf::Color colour = {0, 0, 0, 128};
-    for (int x = 0; x < TILE_MAP_WIDTH + 1; x++)
-    {
-        grid_vertices_.push_back({{x * TILE_SIZE, 0}, colour});
-        grid_vertices_.push_back({{x * TILE_SIZE, TILE_MAP_HEIGHT * TILE_SIZE}, colour});
-    }
-    for (int y = 0; y < TILE_MAP_HEIGHT + 1; y++)
-    {
-        grid_vertices_.push_back({{0, y * TILE_SIZE}, colour});
-        grid_vertices_.push_back({{TILE_MAP_WIDTH * TILE_SIZE, y * TILE_SIZE}, colour});
-    }
 }
 
 void TileMapRenderer::set_tile_colour(const sf::Vector2i& tile_position, sf::Color colour)
@@ -79,12 +66,28 @@ void TileMapRenderer::draw(sf::RenderTarget& render_target, const sf::RenderStat
     render_target.draw(tile_vertices_.data(), tile_vertices_.size(), sf::Quads, states);
 }
 
-void TileMapRenderer::draw_grid(sf::RenderTarget& render_target)
-{
-    render_target.draw(grid_vertices_.data(), grid_vertices_.size(), sf::Lines);
-}
-
 sf::Vector2i world_to_tile_position(const sf::Vector2f world_position)
 {
     return sf::Vector2i(world_position) / static_cast<int>(TILE_SIZE);
+}
+
+TileMapGrid::TileMapGrid()
+{
+    // Create the grid lines
+    sf::Color colour = {0, 0, 0, 128};
+    for (int x = 0; x < TILE_MAP_WIDTH + 1; x++)
+    {
+        grid_vertices_.push_back({{x * TILE_SIZE, 0}, colour});
+        grid_vertices_.push_back({{x * TILE_SIZE, TILE_MAP_HEIGHT * TILE_SIZE}, colour});
+    }
+    for (int y = 0; y < TILE_MAP_HEIGHT + 1; y++)
+    {
+        grid_vertices_.push_back({{0, y * TILE_SIZE}, colour});
+        grid_vertices_.push_back({{TILE_MAP_WIDTH * TILE_SIZE, y * TILE_SIZE}, colour});
+    }
+}
+
+void TileMapGrid::draw(sf::RenderTarget& render_target)
+{
+    render_target.draw(grid_vertices_.data(), grid_vertices_.size(), sf::Lines);
 }

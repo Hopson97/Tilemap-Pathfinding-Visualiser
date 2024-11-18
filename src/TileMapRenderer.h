@@ -13,6 +13,17 @@ constexpr int TILE_MAP_HEIGHT = 80;
 
 sf::Vector2i world_to_tile_position(const sf::Vector2f world_position);
 
+class TileMapGrid
+{
+  public:
+    TileMapGrid();
+
+    void draw(sf::RenderTarget& render_target);
+
+  private:
+    std::vector<sf::Vertex> grid_vertices_;
+};
+
 class TileMapRenderer
 {
   public:
@@ -22,9 +33,7 @@ class TileMapRenderer
     void set_tile_texture_rect(const sf::Vector2i& tile_position, const sf::FloatRect& rect);
 
     void draw(sf::RenderTarget& render_target, const sf::RenderStates& states);
-    void draw_grid(sf::RenderTarget& render_target);
 
   private:
     Array2D<sf::Vertex, 4> tile_vertices_;
-    std::vector<sf::Vertex> grid_vertices_;
 };

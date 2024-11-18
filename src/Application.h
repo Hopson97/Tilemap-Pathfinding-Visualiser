@@ -19,17 +19,6 @@ struct Camera
     float zoom_level = 1.0f;
 };
 
-struct TileMapWrapper
-{
-    TileMapWrapper(const std::filesystem::path& tile_config)
-        : tile_map(tile_config)
-    {
-    }
-
-    TileMap tile_map;
-    TileMapRenderer renderer;
-};
-
 struct EditorConfig
 {
     TileId selected_tile = 0;
@@ -47,14 +36,8 @@ class Application
     void on_render(sf::RenderWindow& window, bool show_debug_info);
 
   private:
-    void set_tile_to_selected(const sf::Vector2i& tile_position);
-    void remove_tile(const sf::Vector2i& tile_position);
-    void update_tile_variation(const sf::Vector2i& tile_position);
-
     void set_tile_map_kind(TileMapKind kind);
-
     void set_selected_tile(TileId selection);
-
     void draw_editor_ui();
 
   private:
@@ -63,11 +46,12 @@ class Application
     Camera camera_;
 
     TileMapKind tile_map_kind_ = TileMapKind::SideView;
-    TileMapWrapper tile_map_side_view_;
-    TileMapWrapper tile_map_top_view_;
-    TileMapWrapper* p_active_tile_map_ = nullptr;
+    TileMap tile_map_side_view_;
+    TileMap tile_map_top_view_;
+    TileMap* p_active_tile_map_ = nullptr;
 
     sf::RectangleShape placement_preview_;
+    TileMapGrid grid_;
 
     EditorConfig editor_config_;
 };
