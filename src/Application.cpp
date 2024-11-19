@@ -48,6 +48,7 @@ void Application::on_event(const sf::Event& e)
                     {
                         tile_map.set_tile(current_tile_position + sf::Vector2i{x, y},
                                           editor_config_.selected_tile);
+                        pathfinding_config_.draw_costs = false;
                     }
                 }
             }
@@ -58,6 +59,7 @@ void Application::on_event(const sf::Event& e)
                     for (int x = 0; x < brush_size.x; x++)
                     {
                         tile_map.remove_tile(current_tile_position + sf::Vector2i{x, y});
+                        pathfinding_config_.draw_costs = false;
                     }
                 }
             }
@@ -176,7 +178,7 @@ void Application::on_render(sf::RenderWindow& window, bool show_debug_info)
 
     // Draw things relative to the window (Imgui)
     window.setView(window.getDefaultView());
-    
+
     if (show_debug_info)
     {
         if (ImGui::Begin("Info"))
@@ -208,9 +210,8 @@ void Application::set_tile_map_kind(TileMapKind map_kind)
     tile_map_kind_ = map_kind;
     set_selected_tile(0);
 
-    pathfinding_config_.draw_costs = false; 
+    pathfinding_config_.draw_costs = false;
     pathfinding_grid_.clear_all();
-
 }
 
 void Application::set_selected_tile(TileId selection)
@@ -323,11 +324,15 @@ void Application::draw_pathfinding_ui()
 
     if (ImGui::Begin("Pathfinding"))
     {
-        if (ImGui::Button("Update costs"))
+        if (ImGui::Button("Show costs"))
         {
             pathfinding_grid_.create_pathing_graph(tile_map, tile_map_kind_);
+            pathfinding_config_.draw_costs = true;
         }
-        ImGui::Checkbox("Draw Costs", &pathfinding_config_.draw_costs);
+        if (pathfinding_config_.draw_costs && ImGui::Button("Hide costs"))
+        {
+            pathfinding_config_.draw_costs = false;
+        }
     }
     ImGui::End();
 }

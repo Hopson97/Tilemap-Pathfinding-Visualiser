@@ -59,7 +59,7 @@ TileMap::TileMap(const std::filesystem::path& tile_config)
             pathing_cost = tile["pathing_cost"];
         }
 
-        TileType::Layer layer;
+        TileType::Layer layer = TileType::Layer::Background;
         {
             std::string layer_name = tile["layer"];
             if (layer_name == "background")
@@ -81,11 +81,13 @@ TileMap::TileMap(const std::filesystem::path& tile_config)
             {
                 special = TileType::Special::Start;
                 start_finish_layer = layer;
+                pathing_cost = 0;
             }
             else if (layer_name == "finish")
             {
                 special = TileType::Special::Finish;
                 start_finish_layer = layer;
+                pathing_cost = 0;
             }
         }
 
@@ -192,6 +194,24 @@ bool TileMap::is_blocking_tile(const sf::Vector2i& tile_position) const
            is_blocking_tile(tile_position, TileType::Layer::Foreground);
 }
 
+std::optional<sf::Vector2i> TileMap::start_position() const
+{
+    if (start_position_ == NO_POSITION)
+    {
+        return {};
+    }
+    return start_position_;
+}
+
+std::optional<sf::Vector2i> TileMap::finish_position() const
+{
+    if (finish_position_ == NO_POSITION)
+    {
+        return {};
+    }
+    return finish_position_;
+}
+
 void TileMap::set_tile(const sf::Vector2i& tile_position, TileId tile_id, SetTileAction action)
 {
     if (tiles_background_.contains(tile_position.x, tile_position.y))
@@ -281,7 +301,8 @@ void TileMap::update_background_tile_variation(const sf::Vector2i& tile_position
         {
             auto neighbour_position = TILE_OFFSETS[i] + tile_position;
             auto& neighbour = get_tiles_at(neighbour_position).background;
-            if (neighbour.id != empty_background_tile_ && neighbour.id != start_tile_id_ && neighbour.id != finish_tile_id_)
+            if (neighbour.id != empty_background_tile_ && neighbour.id != start_tile_id_ &&
+                neighbour.id != finish_tile_id_)
             {
                 variation += static_cast<int>(std::pow(2, i));
             }

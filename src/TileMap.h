@@ -107,6 +107,9 @@ struct TileMap
      */
     bool is_blocking_tile(const sf::Vector2i& tile_position) const;
 
+    std::optional<sf::Vector2i> start_position() const;
+    std::optional<sf::Vector2i> finish_position() const;
+
   private:
     void set_tile(const sf::Vector2i& tile_position, TileId tile_id, SetTileAction action);
 
