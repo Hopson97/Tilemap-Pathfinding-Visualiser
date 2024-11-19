@@ -10,6 +10,7 @@ namespace
     const sf::Vector2i LEFT = {-1, 0};
     const sf::Vector2i RIGHT = {1, 0};
 
+    constexpr int EMPTY_COST = -999;
     constexpr int JUMP_GAP_COST = 4;
 
     namespace Colour
@@ -22,10 +23,14 @@ namespace
 PathFindingCostGrid::PathFindingCostGrid()
     : tile_costs_(TILE_MAP_WIDTH, TILE_MAP_HEIGHT)
 {
+    font_.loadFromFile("assets/Fonts/Freshman.ttf");
+    text_.setFont(font_);
+    text_.setCharacterSize(13);
 }
 
 void PathFindingCostGrid::create_pathing_graph(const TileMap& tilemap, TileMapKind kind)
 {
+    clear_all();
     for (int x = 0; x < TILE_MAP_WIDTH; x++)
     {
         for (int y = 0; y < TILE_MAP_HEIGHT; y++)
@@ -48,12 +53,31 @@ void PathFindingCostGrid::create_pathing_graph(const TileMap& tilemap, TileMapKi
 void PathFindingCostGrid::draw(sf::RenderTarget& render_target)
 {
     tile_costs_renderer_.draw(render_target);
+
+    int current_cost = -1;
+    for (int x = 0; x < TILE_MAP_WIDTH; x++)
+    {
+        for (int y = 0; y < TILE_MAP_HEIGHT; y++)
+        {
+            int cost = get_cost({x, y});
+            if (cost >= 0)
+            {
+                if (cost != current_cost)
+                {
+                    current_cost = cost;
+                    text_.setString(std::to_string(cost));
+                }
+                text_.setPosition(x * TILE_SIZE + 2, y * TILE_SIZE + 2);
+                render_target.draw(text_);
+            }
+        }
+    }
 }
 
 void PathFindingCostGrid::clear_all()
 {
     // Clear the pathing cost grid
-    tile_costs_.fill(0);
+    tile_costs_.fill(EMPTY_COST);
     for (int x = 0; x < TILE_MAP_WIDTH; x++)
     {
         for (int y = 0; y < TILE_MAP_HEIGHT; y++)
@@ -79,7 +103,7 @@ void PathFindingCostGrid::set_tile_cost(const sf::Vector2i tile_position, int co
 }
 
 void PathFindingCostGrid::create_path_cost_top_down(const TileMap& tilemap,
-                                                const sf::Vector2i tile_position)
+                                                    const sf::Vector2i tile_position)
 {
     auto tile = tilemap.get_tiles_at(tile_position);
     if (tile.background.block_pathing && tile.foreground.block_pathing ||
@@ -97,8 +121,12 @@ void PathFindingCostGrid::create_path_cost_top_down(const TileMap& tilemap,
 }
 
 void PathFindingCostGrid::create_path_cost_side_view(const TileMap& tilemap,
-                                                 const sf::Vector2i tile_position)
+                                                     const sf::Vector2i tile_position)
 {
+    if (get_cost(tile_position) != EMPTY_COST)
+    {
+        return;
+    }
     if (!tilemap.is_empty(tile_position))
     {
         set_tile_cost(tile_position, -1);
@@ -107,7 +135,6 @@ void PathFindingCostGrid::create_path_cost_side_view(const TileMap& tilemap,
 
     auto below_tile = tile_position + BELOW;
     auto below_tile_2 = tile_position + BELOW2;
-
     // Check if the below tile is solid
     if (tile_position.y < TILE_MAP_HEIGHT - 1)
     {

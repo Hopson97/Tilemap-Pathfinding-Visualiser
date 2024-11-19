@@ -1,5 +1,8 @@
 #pragma once
 
+#include <SFML/Graphics/Font.hpp>
+#include <SFML/Graphics/Text.hpp>
+
 #include "../TileMapRenderer.h"
 #include "../TileMap.h"
 
@@ -23,6 +26,9 @@ class PathFindingCostGrid
     void create_path_cost_top_down(const TileMap& tilemap, const sf::Vector2i tile_position);
     void create_path_cost_side_view(const TileMap& tilemap, const sf::Vector2i tile_position);
 
-    Array2D<uint8_t> tile_costs_;
+    Array2D<int> tile_costs_;
     TileMapRenderer tile_costs_renderer_;
+
+    sf::Font font_;
+    sf::Text text_;
 };

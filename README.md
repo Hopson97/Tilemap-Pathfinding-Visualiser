@@ -67,3 +67,7 @@ To build and run in release mode, simply add the `release` suffix:
 sh scripts/build.sh release
 sh scripts/run.sh release
 ```
+
+### Credits
+
+Freshman font (Pathing Costs): https://www.dafont.com/freshman.font?af=on
