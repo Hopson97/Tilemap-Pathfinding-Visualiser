@@ -97,6 +97,16 @@ struct TileMap
 
     bool is_empty(const sf::Vector2i& tile_position) const;
 
+    /**
+     * Returns true if the PLACED DOWN tile is a blocking one on the given layer
+     */
+    bool is_blocking_tile(const sf::Vector2i& tile_position, TileType::Layer layer) const;
+
+    /**
+     * Returns true if the PLACED DOWN tile is a blocking one on either layer
+     */
+    bool is_blocking_tile(const sf::Vector2i& tile_position) const;
+
   private:
     void set_tile(const sf::Vector2i& tile_position, TileId tile_id, SetTileAction action);
 

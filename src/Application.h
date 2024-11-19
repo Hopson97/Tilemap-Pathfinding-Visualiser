@@ -9,7 +9,7 @@
 #include "TileMapRenderer.h"
 #include "TileMap.h"
 
-#include "Pathfinding/PathfindingGrid.h"
+#include "Pathfinding/PathfindingCostGrid.h"
 
 class Keyboard;
 
@@ -66,6 +66,6 @@ class Application
 
     EditorConfig editor_config_;
 
-    PathFindingGrid pathfinding_grid_;
+    PathFindingCostGrid pathfinding_grid_;
     PathfindingConfig pathfinding_config_;
 };

@@ -171,7 +171,7 @@ void Application::on_render(sf::RenderWindow& window, bool show_debug_info)
     // Draw the pathfinding visualation
     if (pathfinding_config_.draw_costs)
     {
-        pathfinding_grid_.draw_costs(window);
+        pathfinding_grid_.draw(window);
     }
 
     // Draw things relative to the window (Imgui)
@@ -207,6 +207,10 @@ void Application::set_tile_map_kind(TileMapKind map_kind)
     }
     tile_map_kind_ = map_kind;
     set_selected_tile(0);
+
+    pathfinding_config_.draw_costs = false; 
+    pathfinding_grid_.clear_all();
+
 }
 
 void Application::set_selected_tile(TileId selection)

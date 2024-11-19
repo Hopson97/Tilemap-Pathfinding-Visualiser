@@ -172,6 +172,26 @@ bool TileMap::is_empty(const sf::Vector2i& tile_position) const
            info.foreground.id == empty_foreground_tile_;
 }
 
+bool TileMap::is_blocking_tile(const sf::Vector2i& tile_position, TileType::Layer layer) const
+{
+    auto info = get_tiles_at(tile_position);
+    if (layer == TileType::Layer::Background)
+    {
+        return info.background.id != empty_background_tile_ && info.background.block_pathing;
+    }
+    if (layer == TileType::Layer::Foreground)
+    {
+        return info.foreground.id != empty_foreground_tile_ && info.foreground.block_pathing;
+    }
+    return true;
+}
+
+bool TileMap::is_blocking_tile(const sf::Vector2i& tile_position) const
+{
+    return is_blocking_tile(tile_position, TileType::Layer::Background) ||
+           is_blocking_tile(tile_position, TileType::Layer::Foreground);
+}
+
 void TileMap::set_tile(const sf::Vector2i& tile_position, TileId tile_id, SetTileAction action)
 {
     if (tiles_background_.contains(tile_position.x, tile_position.y))
