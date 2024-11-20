@@ -3,10 +3,10 @@
 namespace
 {
     const sf::Vector2i BELOW = {0, 1};
-    const sf::Vector2i BELOW2 = {0, 2};
+    const sf::Vector2i ABOVE = {0, -1};
+
     const sf::Vector2i LEFT_BELOW = {-1, 1};
     const sf::Vector2i RIGHT_BELOW = {1, 1};
-
     const sf::Vector2i LEFT = {-1, 0};
     const sf::Vector2i RIGHT = {1, 0};
 
@@ -147,34 +147,59 @@ void PathFindingCostGrid::create_path_cost_side_view(const TileMap& tilemap,
     }
 
     auto below_tile = tile_position + BELOW;
-    auto below_tile_2 = tile_position + BELOW2;
-    // Check if the below tile is solid
-    if (tile_position.y < TILE_MAP_HEIGHT - 1)
+    auto above_tile = tile_position + ABOVE;
+    // Check if the below tile is solid and there is 2 high gap
+    if (!tilemap.is_empty(below_tile) && tilemap.is_empty(above_tile))
     {
-        if (!tilemap.is_empty(below_tile))
+        set_tile_cost(tile_position, tilemap.get_tiles_at(below_tile).background.cost);
+
+        /*
+            Check for ledges, example:
+
+             ###
+             ###     ###
+             ###     ###     ###
+             #####   #####   #####
+             #####   #####   #####
+        */
+        auto try_add_ledge_paths = [&](int x_offset)
         {
-            set_tile_cost(tile_position, tilemap.get_tiles_at(below_tile).background.cost);
-
-            // Check for "cliffs" up to 2-height
-            if (tilemap.is_empty(tile_position + sf::Vector2i{0, -1}) &&
-                (!tilemap.is_empty(tile_position + sf::Vector2i{-1, 0}) ||
-                 !tilemap.is_empty(tile_position + sf::Vector2i{1, 0})))
+            if (!tilemap.is_empty(tile_position + sf::Vector2i{x_offset, -1}))
             {
-                set_tile_cost(tile_position + sf::Vector2i{0, -1}, JUMP_GAP_COST);
+                return;
+            }
+            if (!tilemap.is_empty(tile_position + sf::Vector2i{x_offset, 2}) &&
+                tilemap.is_empty(tile_position + sf::Vector2i{x_offset, 1}) &&
+                tilemap.is_empty(tile_position + sf::Vector2i{x_offset, 0}))
+            {
+                set_tile_cost(tile_position + sf::Vector2i{x_offset, 0}, JUMP_GAP_COST * 2);
             }
 
-            for (int y = 2; y < 4; y++)
+            else if (!tilemap.is_empty(tile_position + sf::Vector2i{x_offset, 3}) &&
+                     tilemap.is_empty(tile_position + sf::Vector2i{x_offset, 2}) &&
+                     tilemap.is_empty(tile_position + sf::Vector2i{x_offset, 1}) &&
+                     tilemap.is_empty(tile_position + sf::Vector2i{x_offset, 0}))
             {
-                if (tilemap.is_empty(tile_position + sf::Vector2i{0, -y}) &&
-                    (!tilemap.is_empty(tile_position + sf::Vector2i{-y - 1, -y - 1}) ||
-                     !tilemap.is_empty(tile_position + sf::Vector2i{y - 1, -y - 1})))
-                {
-                    set_tile_cost(tile_position + sf::Vector2i{0, -y}, JUMP_GAP_COST);
-                }
+                set_tile_cost(tile_position + sf::Vector2i{x_offset, 1}, JUMP_GAP_COST * 3);
+                set_tile_cost(tile_position + sf::Vector2i{x_offset, 0}, JUMP_GAP_COST * 3);
             }
 
-            return;
-        }
+            else if (!tilemap.is_empty(tile_position + sf::Vector2i{x_offset, 4}) &&
+                     tilemap.is_empty(tile_position + sf::Vector2i{x_offset, 3}) &&
+                     tilemap.is_empty(tile_position + sf::Vector2i{x_offset, 2}) &&
+                     tilemap.is_empty(tile_position + sf::Vector2i{x_offset, 1}) &&
+                     tilemap.is_empty(tile_position + sf::Vector2i{x_offset, 0}))
+            {
+                set_tile_cost(tile_position + sf::Vector2i{x_offset, 2}, JUMP_GAP_COST * 4);
+                set_tile_cost(tile_position + sf::Vector2i{x_offset, 1}, JUMP_GAP_COST * 4);
+                set_tile_cost(tile_position + sf::Vector2i{x_offset, 0}, JUMP_GAP_COST * 4);
+            }
+        };
+
+        try_add_ledge_paths(-1);
+        try_add_ledge_paths(1);
+
+        return;
     }
 
     // Check if there is a jumpable gap

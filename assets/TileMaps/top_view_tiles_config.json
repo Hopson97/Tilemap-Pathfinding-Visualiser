@@ -5,14 +5,14 @@
     {
       "name": "Grass",
       "texture_index": 0,
-      "pathing_cost": 1,
+      "pathing_cost": 2,
       "connect_to_neighbours": true,
       "layer": "background"
     },
     {
       "name": "Sand",
       "texture_index": 1,
-      "pathing_cost": 2,
+      "pathing_cost": 6,
       "connect_to_neighbours": true,
       "layer": "background"
     },
@@ -32,6 +32,21 @@
     },
 
     {
+      "name": "Path",
+      "texture_index": 6,
+      "pathing_cost": 1,
+      "connect_to_neighbours": false,
+      "layer": "background"
+    },
+    {
+      "name": "Wood Path",
+      "texture_index": 7,
+      "pathing_cost": 1,
+      "connect_to_neighbours": false,
+      "layer": "background"
+    },
+
+    {
       "name": "Start",
       "texture_index": 4,
       "pathing_cost": -1,
@@ -47,5 +62,6 @@
       "layer": "foreground",
       "special": "finish"
     }
+
   ]
 }
