@@ -48,7 +48,7 @@ void Application::on_event(const sf::Event& e)
                     {
                         tile_map.set_tile(current_tile_position + sf::Vector2i{x, y},
                                           editor_config_.selected_tile);
-                        pathfinding_config_.draw_costs = false;
+                        path_finding_config_.draw_costs = false;
                     }
                 }
             }
@@ -59,7 +59,7 @@ void Application::on_event(const sf::Event& e)
                     for (int x = 0; x < brush_size.x; x++)
                     {
                         tile_map.remove_tile(current_tile_position + sf::Vector2i{x, y});
-                        pathfinding_config_.draw_costs = false;
+                        path_finding_config_.draw_costs = false;
                     }
                 }
             }
@@ -130,6 +130,18 @@ void Application::on_update(const Keyboard& keyboard, sf::Time dt)
 
 void Application::on_fixed_update(sf::Time dt)
 {
+    // TODO
+    if (play_visualiser_)
+    {
+        // Each update, highlight the currently visited node, FIFO from the pathing algorithm
+        if (!path_finding_result_current_.visited.empty())
+        {
+            auto next = path_finding_result_current_.visited.front();
+            path_finding_result_current_.visited.pop_front();
+            path_finding_visualisor_.set_state(next, PathFindingState::Visited);
+            visisted_++;
+        }
+    }
 }
 
 void Application::on_render(sf::RenderWindow& window, bool show_debug_info)
@@ -171,10 +183,13 @@ void Application::on_render(sf::RenderWindow& window, bool show_debug_info)
     }
 
     // Draw the pathfinding visualation
-    if (pathfinding_config_.draw_costs)
+    if (path_finding_config_.draw_costs)
     {
-        pathfinding_grid_.draw(window);
+        path_finding_grid_.draw(window);
     }
+
+    // Draw the pathfinding result
+    path_finding_visualisor_.draw(window);
 
     // Draw things relative to the window (Imgui)
     window.setView(window.getDefaultView());
@@ -210,8 +225,8 @@ void Application::set_tile_map_kind(TileMapKind map_kind)
     tile_map_kind_ = map_kind;
     set_selected_tile(0);
 
-    pathfinding_config_.draw_costs = false;
-    pathfinding_grid_.clear_all();
+    path_finding_config_.draw_costs = false;
+    path_finding_grid_.clear_all();
 }
 
 void Application::set_selected_tile(TileId selection)
@@ -232,6 +247,10 @@ void Application::set_selected_tile(TileId selection)
 
 void Application::draw_editor_ui()
 {
+    if (play_visualiser_)
+    {
+        return;
+    }
     assert(p_active_tile_map_);
     auto& tile_map = *p_active_tile_map_;
 
@@ -322,16 +341,62 @@ void Application::draw_pathfinding_ui()
     assert(p_active_tile_map_);
     auto& tile_map = *p_active_tile_map_;
 
+    auto reset_visualiser = [&](const PathFindingResult& result)
+    {
+        path_finding_config_.draw_costs = false;
+        play_visualiser_ = true;
+
+        path_finding_result_ = result;
+        path_finding_result_current_ = result;
+        visisted_ = 0;
+
+        path_finding_visualisor_.clear();
+    };
+
     if (ImGui::Begin("Pathfinding"))
     {
         if (ImGui::Button("Show costs"))
         {
-            pathfinding_grid_.create_pathing_graph(tile_map, tile_map_kind_);
-            pathfinding_config_.draw_costs = true;
+            path_finding_grid_.create_pathing_graph(tile_map, tile_map_kind_);
+            path_finding_config_.draw_costs = true;
         }
-        if (pathfinding_config_.draw_costs && ImGui::Button("Hide costs"))
+        if (path_finding_config_.draw_costs && ImGui::Button("Hide costs"))
         {
-            pathfinding_config_.draw_costs = false;
+            path_finding_config_.draw_costs = false;
+        }
+
+        ImGui::Separator();
+
+        auto start = tile_map.start_position();
+        auto finish = tile_map.finish_position();
+
+        if (start && finish)
+        {
+
+            if (ImGui::Button("Breadth First Search"))
+            {
+                path_finding_grid_.create_pathing_graph(tile_map, tile_map_kind_);
+                reset_visualiser(breadth_first_search(path_finding_grid_, *start, *finish));
+            }
+        }
+
+
+        if (play_visualiser_)
+        {
+            if (ImGui::Button("Stop"))
+            {
+                path_finding_config_.draw_costs = false;
+                play_visualiser_ = false;
+                path_finding_visualisor_.clear();
+            }
+        }
+        else
+        {
+            if (ImGui::Button("Clear"))
+            {
+                path_finding_config_.draw_costs = false;
+                path_finding_visualisor_.clear();
+            }
         }
     }
     ImGui::End();

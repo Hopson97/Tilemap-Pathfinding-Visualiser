@@ -9,7 +9,9 @@
 #include "TileMapRenderer.h"
 #include "TileMap.h"
 
-#include "Pathfinding/PathfindingCostGrid.h"
+#include "PathFinding/PathfindingCostGrid.h"
+#include "PathFinding/PathFindingVisualiser.h"
+#include "PathFinding/PathfindingAlgorithms.h"
 
 class Keyboard;
 
@@ -66,6 +68,18 @@ class Application
 
     EditorConfig editor_config_;
 
-    PathFindingCostGrid pathfinding_grid_;
-    PathfindingConfig pathfinding_config_;
+    PathFindingCostGrid path_finding_grid_;
+    PathfindingConfig path_finding_config_;
+    PathFindingVisualiser path_finding_visualisor_;
+
+    // The actual result from the pathfinding algorithm
+    PathFindingResult path_finding_result_;
+
+    // A copy of the result that is used to update the visuliser using FIFO to remove as 
+    // visited/ pathing nodes are added to it.
+    PathFindingResult path_finding_result_current_;
+
+    int visisted_ = 0;
+
+    bool play_visualiser_ = false;
 };

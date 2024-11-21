@@ -12,13 +12,14 @@ class PathFindingCostGrid
   public:
     PathFindingCostGrid();
 
-    void create_pathing_graph(const TileMap& tilemap, TileMapKind kind);
 
     void draw(sf::RenderTarget& render_target);
 
     void clear_all();
+    void create_pathing_graph(const TileMap& tilemap, TileMapKind kind);
 
-    int get_cost(const sf::Vector2i tile_position) const;
+    int get_cost(const sf::Vector2i& tile_position) const;
+    bool traversable(const sf::Vector2i& from, const sf::Vector2i& to) const;
 
   private:
     void set_tile_cost(const sf::Vector2i tile_position, int cost);

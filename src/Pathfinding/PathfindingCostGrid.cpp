@@ -100,12 +100,23 @@ void PathFindingCostGrid::clear_all()
     }
 }
 
-int PathFindingCostGrid::get_cost(const sf::Vector2i tile_position) const
+int PathFindingCostGrid::get_cost(const sf::Vector2i& tile_position) const
 {
     if (tile_costs_.contains(tile_position.x, tile_position.y))
     {
         return tile_costs_.get(tile_position.x, tile_position.y);
     }
+}
+
+bool PathFindingCostGrid::traversable(const sf::Vector2i& from, const sf::Vector2i& to) const
+{
+    auto to_cost = get_cost(to);
+    if (to_cost == -1)
+    {
+
+        return false;
+    }
+    return true;
 }
 
 void PathFindingCostGrid::set_tile_cost(const sf::Vector2i tile_position, int cost)
