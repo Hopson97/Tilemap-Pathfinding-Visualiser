@@ -13,6 +13,7 @@
 #include "PathFinding/PathFindingVisualiser.h"
 
 class Keyboard;
+class TimeStep;
 
 struct Camera
 {
@@ -31,6 +32,7 @@ struct EditorConfig
 struct PathFindingConfig
 {
     bool draw_costs = false;
+    bool visualiser_playing = false;
 };
 
 class Application
@@ -41,13 +43,14 @@ class Application
     void on_event(const sf::Event& e);
     void on_update(const Keyboard& keyboard, sf::Time dt);
     void on_fixed_update(sf::Time dt);
-    void on_render(sf::RenderWindow& window, bool show_debug_info);
+    void on_render(sf::RenderWindow& window);
+    void on_gui(sf::RenderWindow& window, TimeStep& timestep, bool show_debug_info);
 
   private:
     void set_tile_map_kind(TileMapKind kind);
     void set_selected_tile(TileId selection);
     void draw_editor_ui();
-    void draw_pathfinding_ui();
+    void draw_pathfinding_ui(TimeStep& timestep);
 
     /// Gets the brush size, either will be the editor one or 1 if the tile is "special"
     sf::Vector2i get_brush_size();
@@ -71,14 +74,12 @@ class Application
     PathFindingConfig path_finding_config_;
     PathFindingVisualiser path_finding_visualiser_;
 
-    // The actual result from the pathfinding algorithm
+    // The actual result from the path finding algorithm
     PathFindingResult path_finding_result_;
 
-    // A copy of the result that is used to update the visuliser using FIFO to remove as
+    // A copy of the result that is used to update the visualiser using FIFO to remove as
     // visited/ pathing nodes are added to it.
     PathFindingResult path_finding_result_current_;
 
-    int visisted_ = 0;
-
-    bool play_visualiser_ = false;
+    int visited_ = 0;
 };

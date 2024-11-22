@@ -7,6 +7,7 @@
 
 #include "Util/ImGuiExtension.h"
 #include "Util/Keyboard.h"
+#include "Util/TimeStep.h"
 #include "Util/Util.h"
 
 namespace
@@ -37,7 +38,7 @@ void Application::on_event(const sf::Event& e)
 
     auto try_place_or_remove_tiles = [&]()
     {
-        if (!ImGui::GetIO().WantCaptureMouse)
+        if (!ImGui::GetIO().WantCaptureMouse && !path_finding_config_.visualiser_playing)
         {
             auto brush_size = get_brush_size();
             if (is_mouse_down && button_pressed == sf::Mouse::Button::Left)
@@ -101,9 +102,6 @@ void Application::on_event(const sf::Event& e)
 
 void Application::on_update(const Keyboard& keyboard, sf::Time dt)
 {
-    assert(p_active_tile_map_);
-    auto& tile_map = *p_active_tile_map_;
-
     // Move camera
     int CAMERA_SPEED = 15;
     sf::Vector2f movement;
@@ -128,10 +126,10 @@ void Application::on_update(const Keyboard& keyboard, sf::Time dt)
     camera_.velocity *= 0.95f;
 }
 
-void Application::on_fixed_update(sf::Time dt)
+void Application::on_fixed_update([[maybe_unused]] sf::Time dt)
 {
     // TODO
-    if (play_visualiser_)
+    if (path_finding_config_.visualiser_playing)
     {
         // Each update, highlight the currently visited node, FIFO from the pathing algorithm
         if (!path_finding_result_current_.visited.empty())
@@ -139,18 +137,15 @@ void Application::on_fixed_update(sf::Time dt)
             auto next = path_finding_result_current_.visited.front();
             path_finding_result_current_.visited.pop_front();
             path_finding_visualiser_.set_state(next, PathFindingState::Visited);
-            visisted_++;
+            visited_++;
         }
     }
 }
 
-void Application::on_render(sf::RenderWindow& window, bool show_debug_info)
+void Application::on_render(sf::RenderWindow& window)
 {
     assert(p_active_tile_map_);
     auto& tile_map = *p_active_tile_map_;
-
-    draw_editor_ui();
-    draw_pathfinding_ui();
 
     // Draw things relative to the camera view
     camera_.view.setSize(sf::Vector2f{window.getSize()} / camera_.zoom_level);
@@ -166,7 +161,7 @@ void Application::on_render(sf::RenderWindow& window, bool show_debug_info)
     }
 
     // Draw the preview
-    if (!ImGui::GetIO().WantCaptureMouse)
+    if (!ImGui::GetIO().WantCaptureMouse && !path_finding_config_.visualiser_playing)
     {
         auto current_preview_position = placement_preview_.getPosition();
         auto brush_size = get_brush_size();
@@ -190,7 +185,10 @@ void Application::on_render(sf::RenderWindow& window, bool show_debug_info)
 
     // Draw the pathfinding result
     path_finding_visualiser_.draw(window);
+}
 
+void Application::on_gui(sf::RenderWindow& window, TimeStep& timestep, bool show_debug_info)
+{
     // Draw things relative to the window (Imgui)
     window.setView(window.getDefaultView());
 
@@ -203,6 +201,8 @@ void Application::on_render(sf::RenderWindow& window, bool show_debug_info)
         }
         ImGui::End();
     }
+    draw_editor_ui();
+    draw_pathfinding_ui(timestep);
 }
 
 void Application::set_tile_map_kind(TileMapKind map_kind)
@@ -247,10 +247,7 @@ void Application::set_selected_tile(TileId selection)
 
 void Application::draw_editor_ui()
 {
-    if (play_visualiser_)
-    {
-        return;
-    }
+
     assert(p_active_tile_map_);
     auto& tile_map = *p_active_tile_map_;
 
@@ -324,19 +321,26 @@ void Application::draw_editor_ui()
 
     if (ImGui::Begin("Tools"))
     {
-        select_perspective_ui();
-        ImGui::Separator();
+        if (path_finding_config_.visualiser_playing)
+        {
+            ImGui::Text("Editing is disabled in pathfinding");
+        }
+        else
+        {
+            select_perspective_ui();
+            ImGui::Separator();
 
-        tile_selection_ui();
-        ImGui::Separator();
+            tile_selection_ui();
+            ImGui::Separator();
 
-        ImGui::Separator();
-        sliders_ui();
+            ImGui::Separator();
+            sliders_ui();
+        }
     }
     ImGui::End();
 }
 
-void Application::draw_pathfinding_ui()
+void Application::draw_pathfinding_ui(TimeStep& timestep)
 {
     assert(p_active_tile_map_);
     auto& tile_map = *p_active_tile_map_;
@@ -344,16 +348,16 @@ void Application::draw_pathfinding_ui()
     auto reset_visualiser = [&](const PathFindingResult& result)
     {
         path_finding_config_.draw_costs = false;
-        play_visualiser_ = true;
+        path_finding_config_.visualiser_playing = true;
 
         path_finding_result_ = result;
         path_finding_result_current_ = result;
-        visisted_ = 0;
+        visited_ = 0;
 
         path_finding_visualiser_.clear();
     };
 
-    if (ImGui::Begin("PathFinding"))
+    if (ImGui::Begin("Path Finding"))
     {
         if (ImGui::Button("Show costs"))
         {
@@ -379,15 +383,33 @@ void Application::draw_pathfinding_ui()
                 reset_visualiser(breadth_first_search(path_finding_grid_, *start, *finish));
             }
         }
+        else
+        {
+            ImGui::Text("Please place a START and FINISH to");
+            ImGui::Text("enable the pathfinding.");
+        }
+    }
+    ImGui::End();
 
-        if (play_visualiser_)
+    if (ImGui::Begin("Player"))
+    {
+        int tick_rate = timestep.tick_rate();
+        if (ImGui::SliderInt("Pathfinding Speed", &tick_rate, 1, 1000))
+        {
+            timestep.set_tick_rate(tick_rate);
+        }
+
+        if (path_finding_config_.visualiser_playing)
         {
             if (ImGui::Button("Stop"))
             {
                 path_finding_config_.draw_costs = false;
-                play_visualiser_ = false;
+                path_finding_config_.visualiser_playing = false;
                 path_finding_visualiser_.clear();
             }
+
+            ImGui::Text("%d/%d", visited_, (int)path_finding_result_.visited.size());
+            ImGui::ProgressBar((float)visited_ / (float)path_finding_result_.visited.size());
         }
         else
         {

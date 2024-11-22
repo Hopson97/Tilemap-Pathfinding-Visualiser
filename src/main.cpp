@@ -20,7 +20,8 @@ namespace
 
 int main()
 {
-    sf::RenderWindow window({1600, 900}, "Path Finding Visualiser - Press F1 for debug - Press F2 to hide grid");
+    sf::RenderWindow window({1600, 900},
+                            "Path Finding Visualiser - Press F1 for debug - Press F2 to hide grid");
     window.setVerticalSyncEnabled(true);
     window.setActive(true);
 
@@ -50,7 +51,7 @@ int main()
         auto dt = clock.restart();
 
         // Update
-        
+
         {
             auto& update_profiler = profiler.begin_section("Update");
             ImGui::SFML::Update(window, dt);
@@ -68,7 +69,8 @@ int main()
         window.clear({100, 200, 255});
         {
             auto& render_profiler = profiler.begin_section("Render");
-            app.on_render(window, show_debug);
+            app.on_gui(window, fixed_updater, show_debug);
+            app.on_render(window);
             render_profiler.end_section();
         }
 

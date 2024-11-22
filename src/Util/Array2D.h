@@ -52,7 +52,7 @@ class Array2D
 
     bool contains(int x, int y) const
     {
-        return x >= 0 && x < WIDTH && y >= 0 && y < HEIGHT;
+        return (int)x >= 0 && x < (int)WIDTH && (int)y >= 0 && (int)y < HEIGHT;
     }
 
     size_t index(int x, int y) const
