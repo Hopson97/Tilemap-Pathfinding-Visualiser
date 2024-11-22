@@ -106,6 +106,7 @@ int PathFindingCostGrid::get_cost(const sf::Vector2i& tile_position) const
     {
         return tile_costs_.get(tile_position.x, tile_position.y);
     }
+    return -1;
 }
 
 bool PathFindingCostGrid::traversable(const sf::Vector2i& from, const sf::Vector2i& to) const
@@ -116,6 +117,28 @@ bool PathFindingCostGrid::traversable(const sf::Vector2i& from, const sf::Vector
 
         return false;
     }
+
+    /*
+     *  Prevent skipping diagonal gaps.
+     *  For example, if # is a non-empty tile and . is an empty tile, getting from S to E
+     *  should impossible:
+     *
+     *              . . . . . . . .
+     *              . . S # . . . .
+     *              . . # # . . . .
+     *              . . . . # # . .
+     *              . . . . # E . .
+     *              . . . . . . . .
+     *
+     */
+    sf::Vector2i diff = to - from;
+    if (std::abs(diff.x) == 1 && std::abs(diff.y) == 1)
+    {
+        auto cost_a = get_cost(to - sf::Vector2i{0, diff.y});
+        auto cost_b = get_cost(to - sf::Vector2i{diff.x, 0});
+        return cost_a != -1 && cost_b - 1;
+    }
+
     return true;
 }
 
