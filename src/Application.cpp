@@ -138,7 +138,7 @@ void Application::on_fixed_update(sf::Time dt)
         {
             auto next = path_finding_result_current_.visited.front();
             path_finding_result_current_.visited.pop_front();
-            path_finding_visualisor_.set_state(next, PathFindingState::Visited);
+            path_finding_visualiser_.set_state(next, PathFindingState::Visited);
             visisted_++;
         }
     }
@@ -189,7 +189,7 @@ void Application::on_render(sf::RenderWindow& window, bool show_debug_info)
     }
 
     // Draw the pathfinding result
-    path_finding_visualisor_.draw(window);
+    path_finding_visualiser_.draw(window);
 
     // Draw things relative to the window (Imgui)
     window.setView(window.getDefaultView());
@@ -350,10 +350,10 @@ void Application::draw_pathfinding_ui()
         path_finding_result_current_ = result;
         visisted_ = 0;
 
-        path_finding_visualisor_.clear();
+        path_finding_visualiser_.clear();
     };
 
-    if (ImGui::Begin("Pathfinding"))
+    if (ImGui::Begin("PathFinding"))
     {
         if (ImGui::Button("Show costs"))
         {
@@ -380,14 +380,13 @@ void Application::draw_pathfinding_ui()
             }
         }
 
-
         if (play_visualiser_)
         {
             if (ImGui::Button("Stop"))
             {
                 path_finding_config_.draw_costs = false;
                 play_visualiser_ = false;
-                path_finding_visualisor_.clear();
+                path_finding_visualiser_.clear();
             }
         }
         else
@@ -395,7 +394,7 @@ void Application::draw_pathfinding_ui()
             if (ImGui::Button("Clear"))
             {
                 path_finding_config_.draw_costs = false;
-                path_finding_visualisor_.clear();
+                path_finding_visualiser_.clear();
             }
         }
     }

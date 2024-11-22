@@ -1,17 +1,16 @@
 #pragma once
 
-
-#include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/Graphics/RectangleShape.hpp>
+#include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/System/Clock.hpp>
 
-#include "TileMapRenderer.h"
 #include "TileMap.h"
+#include "TileMapRenderer.h"
 
-#include "PathFinding/PathfindingCostGrid.h"
+#include "PathFinding/PathFindingAlgorithms.h"
+#include "PathFinding/PathFindingCostGrid.h"
 #include "PathFinding/PathFindingVisualiser.h"
-#include "PathFinding/PathfindingAlgorithms.h"
 
 class Keyboard;
 
@@ -29,7 +28,7 @@ struct EditorConfig
     sf::Vector2i brush_size = {1, 1};
 };
 
-struct PathfindingConfig
+struct PathFindingConfig
 {
     bool draw_costs = false;
 };
@@ -49,7 +48,7 @@ class Application
     void set_selected_tile(TileId selection);
     void draw_editor_ui();
     void draw_pathfinding_ui();
-    
+
     /// Gets the brush size, either will be the editor one or 1 if the tile is "special"
     sf::Vector2i get_brush_size();
 
@@ -69,13 +68,13 @@ class Application
     EditorConfig editor_config_;
 
     PathFindingCostGrid path_finding_grid_;
-    PathfindingConfig path_finding_config_;
-    PathFindingVisualiser path_finding_visualisor_;
+    PathFindingConfig path_finding_config_;
+    PathFindingVisualiser path_finding_visualiser_;
 
     // The actual result from the pathfinding algorithm
     PathFindingResult path_finding_result_;
 
-    // A copy of the result that is used to update the visuliser using FIFO to remove as 
+    // A copy of the result that is used to update the visuliser using FIFO to remove as
     // visited/ pathing nodes are added to it.
     PathFindingResult path_finding_result_current_;
 

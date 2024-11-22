@@ -14,11 +14,15 @@ add_executable(${PROJECT_NAME}
 
     src/TileMap.cpp
     src/TileMapRenderer.cpp
+    src/TileMapRenderer.cpp
+
+    src/PathFinding/BreadthFirstSearch.cpp
+    src/PathFinding/PathFindingCostGrid.cpp
+    src/PathFinding/PathFindingVisualiser.cpp
 
     src/Util/ImGuiExtension.cpp
     src/Util/Keyboard.cpp
     src/Util/Profiler.cpp
-    src/Util/Util.cpp
 )
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)

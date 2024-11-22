@@ -1,4 +1,4 @@
-# Pathfinding Visualistor
+# PathFinding Visualistor
 
 ## Building and Running
 

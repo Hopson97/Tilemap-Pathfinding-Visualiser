@@ -149,7 +149,7 @@
   <ItemGroup>
     <ClCompile Include="deps\imgui_sfml\imgui-SFML.cpp" />
     <ClCompile Include="src\PathFinding\BreadthFirstSearch.cpp" />
-    <ClCompile Include="src\PathFinding\PathfindingCostGrid.cpp" />
+    <ClCompile Include="src\PathFinding\PathFindingCostGrid.cpp" />
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\PathFinding\PathFindingVisualiser.cpp" />
@@ -170,8 +170,8 @@
     <ClInclude Include="deps\imgui_sfml\imconfig-SFML.h" />
     <ClInclude Include="deps\imgui_sfml\imgui-SFML.h" />
     <ClInclude Include="deps\imgui_sfml\imgui-SFML_export.h" />
-    <ClInclude Include="src\PathFinding\PathfindingAlgorithms.h" />
-    <ClInclude Include="src\PathFinding\PathfindingCostGrid.h" />
+    <ClInclude Include="src\PathFinding\PathFindingAlgorithms.h" />
+    <ClInclude Include="src\PathFinding\PathFindingCostGrid.h" />
     <ClInclude Include="src\Application.h" />
     <ClInclude Include="src\PathFinding\PathFindingVisualiser.h" />
     <ClInclude Include="src\TileMap.h" />

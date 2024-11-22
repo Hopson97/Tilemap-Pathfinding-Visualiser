@@ -2,6 +2,7 @@
 
 #include <array>
 #include <deque>
+#include <string>
 
 #include <SFML/System/Vector2.hpp>
 
@@ -21,7 +22,7 @@ struct PathFindingResult
     std::deque<sf::Vector2i> path;
 };
 
-// All neighbour offsets (vertical, horizontal, and diaganol.
+// All neighbour offsets (vertical, horizontal, and diagonal.
 const std::array<sf::Vector2i, 8> NEIGHBOUR_TILES = {
     sf::Vector2i{0, 1}, {-1, 0}, {1, 0}, {0, -1}, {1, 1}, {-1, -1}, {1, -1}, {-1, -1}};
 

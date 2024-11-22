@@ -1,4 +1,4 @@
-#include "PathfindingCostGrid.h"
+#include "PathFindingCostGrid.h"
 
 namespace
 {
