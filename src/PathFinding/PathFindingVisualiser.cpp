@@ -10,7 +10,7 @@ namespace
                 return sf::Color::Transparent;
 
             case PathFindingState::Visited:
-                return {125, 200, 255, 128};
+                return {50, 100, 255, 128};
 
             case PathFindingState::Path:
                 return {0, 255, 255, 128};
