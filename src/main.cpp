@@ -86,6 +86,8 @@ int main()
         window.display();
     }
 
+    app.save_tile_maps();
+
     ImGui::SFML::Shutdown(window);
 }
 

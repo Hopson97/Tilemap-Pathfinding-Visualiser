@@ -13,6 +13,9 @@
 namespace
 {
     constexpr static float CAMERA_CAMERA_SPEED = 100.0f;
+
+    constexpr const char* DEFAULT_SIDE_VIEW_FILE = "./data/default_side_view_map.txt";
+    constexpr const char* DEFAULT_TOP_VIEW_FILE = "./data/default_top_view_map.txt";
 } // namespace
 
 Application::Application(const sf::RenderWindow& window)
@@ -25,6 +28,9 @@ Application::Application(const sf::RenderWindow& window)
                            TILE_SIZE * TILE_MAP_HEIGHT / 2 + TILE_SIZE / 2);
     set_tile_map_kind(TileMapKind::TopDownView);
     placement_preview_.setFillColor({255, 255, 255, 128});
+
+    tile_map_side_view_.load(DEFAULT_SIDE_VIEW_FILE);
+    tile_map_top_view_.load(DEFAULT_TOP_VIEW_FILE);
 }
 
 void Application::on_event(const sf::Event& e)
@@ -203,6 +209,12 @@ void Application::on_gui(sf::RenderWindow& window, TimeStep& timestep, bool show
     }
     draw_editor_ui();
     draw_pathfinding_ui(timestep);
+}
+
+void Application::save_tile_maps()
+{
+    tile_map_side_view_.save("./data/default_side_view_map.txt");
+    tile_map_top_view_.save("./data/default_top_view_map.txt");
 }
 
 void Application::set_tile_map_kind(TileMapKind map_kind)

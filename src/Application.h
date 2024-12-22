@@ -46,6 +46,8 @@ class Application
     void on_render(sf::RenderWindow& window);
     void on_gui(sf::RenderWindow& window, TimeStep& timestep, bool show_debug_info);
 
+    void save_tile_maps();
+
   private:
     void set_tile_map_kind(TileMapKind kind);
     void set_selected_tile(TileId selection);

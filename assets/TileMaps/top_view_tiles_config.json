@@ -5,14 +5,14 @@
     {
       "name": "Grass",
       "texture_index": 0,
-      "pathing_cost": 2,
+      "pathing_cost": 20,
       "connect_to_neighbours": true,
       "layer": "background"
     },
     {
       "name": "Sand",
       "texture_index": 1,
-      "pathing_cost": 6,
+      "pathing_cost": 60,
       "connect_to_neighbours": true,
       "layer": "background"
     },

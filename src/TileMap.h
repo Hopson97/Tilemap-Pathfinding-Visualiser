@@ -6,12 +6,11 @@
 #include <SFML/Graphics/Rect.hpp>
 #include <SFML/Graphics/Texture.hpp>
 
+#include "TileType.h"
 #include "TileMapRenderer.h"
 #include "Util/Array2D.h"
 
 const std::array<sf::Vector2i, 4> TILE_OFFSETS = {sf::Vector2i{0, 1}, {-1, 0}, {1, 0}, {0, -1}};
-
-using TileId = int16_t;
 
 enum class TileMapKind
 {
@@ -25,42 +24,7 @@ enum class TileMapKind
  */
 const sf::Vector2i NO_POSITION = {-1, -1};
 
-/**
- *   Data about a tile type - used as a flyweight.
- */
-struct TileType
-{
-    enum class Layer
-    {
-        Background,
-        Foreground
-    };
 
-    enum class Special
-    {
-        Start,
-        Finish,
-        No
-    };
-
-    TileType(TileId id, std::string name, int index, int cost, bool connect_to_neighbours,
-             Layer layer, const Special special);
-
-    const TileId id = 0;
-    const sf::FloatRect texture_rect;
-
-    const std::string name;
-    const int cost = 1;
-
-    const bool connect_to_neighbours = false;
-    const bool block_pathing = false;
-
-    const Layer layer;
-
-    const Special special;
-
-    sf::FloatRect get_normalised_texture_rect(const sf::Vector2f& atlas_size) const;
-};
 
 /**
  *  When getting the tiles at a particular location, this wraps getting the info for all the layers
@@ -110,6 +74,10 @@ struct TileMap
 
     std::optional<sf::Vector2i> start_position() const;
     std::optional<sf::Vector2i> finish_position() const;
+
+    void save(const std::filesystem::path path);
+    bool load(const std::filesystem::path path);
+
 
   private:
     void set_tile(const sf::Vector2i& tile_position, TileId tile_id, SetTileAction action);
