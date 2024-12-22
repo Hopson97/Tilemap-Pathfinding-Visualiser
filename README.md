@@ -71,3 +71,9 @@ sh scripts/run.sh release
 ### Credits
 
 Freshman font (Pathing Costs): https://www.dafont.com/freshman.font?af=on
+
+### Resources
+
+Good video for in-depth Dijkstra's Algorithm for Tile Maps: https://www.youtube.com/watch?v=fa1NSUBqiJc
+
+Wikipedia for Dijkstra's Algorithm: https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm

@@ -155,6 +155,7 @@
     <ClCompile Include="src\PathFinding\PathFindingVisualiser.cpp" />
     <ClCompile Include="src\TileMap.cpp" />
     <ClCompile Include="src\TileMapRenderer.cpp" />
+    <ClCompile Include="src\PathFinding\DijkstrasAlgorithm.cpp" />
     <ClCompile Include="src\TileType.cpp" />
     <ClCompile Include="src\Util\ImGuiExtension.cpp" />
     <ClCompile Include="src\Util\Keyboard.cpp" />

@@ -394,6 +394,12 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
                 path_finding_grid_.create_pathing_graph(tile_map, tile_map_kind_);
                 reset_visualiser(breadth_first_search(path_finding_grid_, *start, *finish));
             }
+
+            if (ImGui::Button("Dijkstra's algorithm"))
+            {
+                path_finding_grid_.create_pathing_graph(tile_map, tile_map_kind_);
+                reset_visualiser(dijkstra_algorithm(path_finding_grid_, *start, *finish));
+            }
         }
         else
         {

@@ -16,6 +16,21 @@ struct HashVec2
     }
 };
 
+/// Minimal struct for a given tile's position and "weight"
+struct PathfindingNode
+{
+    sf::Vector2i position;
+    int cost = 0;
+};
+
+struct ComparePathfindingNodeCosts
+{
+    bool operator()(const PathfindingNode& lhs, const PathfindingNode& rhs)
+    {
+        return lhs.cost > rhs.cost;
+    }
+};
+
 struct PathFindingResult
 {
     std::deque<sf::Vector2i> visited;
@@ -27,4 +42,7 @@ const std::array<sf::Vector2i, 8> NEIGHBOUR_TILES = {
     sf::Vector2i{0, 1}, {-1, 0}, {1, 0}, {0, -1}, {1, 1}, {-1, -1}, {1, -1}, {-1, 1}};
 
 PathFindingResult breadth_first_search(const PathFindingCostGrid& grid, const sf::Vector2i& start,
+                                       const sf::Vector2i& finish);
+
+PathFindingResult dijkstra_algorithm(const PathFindingCostGrid& grid, const sf::Vector2i& start,
                                        const sf::Vector2i& finish);
