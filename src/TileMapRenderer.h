@@ -35,5 +35,5 @@ class TileMapRenderer
     void draw(sf::RenderTarget& render_target, const sf::RenderStates& states = sf::RenderStates::Default);
 
   private:
-    Array2D<sf::Vertex, 4> tile_vertices_;
+    Array2D<sf::Vertex, 6> tile_vertices_;
 };

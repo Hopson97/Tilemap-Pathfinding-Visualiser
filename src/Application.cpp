@@ -24,8 +24,8 @@ Application::Application(const sf::RenderWindow& window)
     , tile_map_top_view_("assets/TileMaps/top_view_tiles_config.json")
     , placement_preview_({TILE_SIZE, TILE_SIZE})
 {
-    camera_.view.setCenter(TILE_SIZE * TILE_MAP_WIDTH / 2 + TILE_SIZE / 2,
-                           TILE_SIZE * TILE_MAP_HEIGHT / 2 + TILE_SIZE / 2);
+    camera_.view.setCenter({TILE_SIZE * TILE_MAP_WIDTH / 2 + TILE_SIZE / 2,
+                            TILE_SIZE * TILE_MAP_HEIGHT / 2 + TILE_SIZE / 2});
     set_tile_map_kind(TileMapKind::TopDownView);
     placement_preview_.setFillColor({255, 255, 255, 128});
 
@@ -73,28 +73,27 @@ void Application::on_event(const sf::Event& e)
         }
     };
 
-    if (e.type == sf::Event::MouseWheelScrolled)
+    if (auto mouse_scroll = e.getIf<sf::Event::MouseWheelScrolled>())
     {
-        camera_.zoom_level += e.mouseWheelScroll.delta / 15.0f;
+        camera_.zoom_level += mouse_scroll->delta / 15.0f;
         camera_.zoom_level = std::clamp(camera_.zoom_level, 0.2f, 5.0f);
     }
-    else if (e.type == sf::Event::MouseButtonPressed)
+    else if (auto mouse_pressed = e.getIf<sf::Event::MouseButtonPressed>())
     {
         is_mouse_down = true;
-        button_pressed = e.mouseButton.button;
+        button_pressed = mouse_pressed->button;
         current_tile_position = world_to_tile_position(
-            p_window->mapPixelToCoords({e.mouseButton.x, e.mouseButton.y}, camera_.view));
+            p_window->mapPixelToCoords(mouse_pressed->position, camera_.view));
         try_place_or_remove_tiles();
     }
-    else if (e.type == sf::Event::MouseButtonReleased)
+    else if (auto mouse_released = e.getIf<sf::Event::MouseButtonReleased>())
     {
         is_mouse_down = false;
     }
-
-    else if (e.type == sf::Event::MouseMoved)
+    else if (auto mouse_moved = e.getIf<sf::Event::MouseMoved>())
     {
-        auto new_tile_position = world_to_tile_position(
-            p_window->mapPixelToCoords({e.mouseMove.x, e.mouseMove.y}, camera_.view));
+        auto new_tile_position =
+            world_to_tile_position(p_window->mapPixelToCoords(mouse_moved->position, camera_.view));
 
         if (new_tile_position != current_tile_position)
         {
@@ -111,19 +110,19 @@ void Application::on_update(const Keyboard& keyboard, sf::Time dt)
     // Move camera
     float CAMERA_SPEED = 15.0f;
     sf::Vector2f movement;
-    if (keyboard.is_key_down(sf::Keyboard::W))
+    if (keyboard.is_key_down(sf::Keyboard::Key::W))
     {
         movement.y -= CAMERA_SPEED;
     }
-    else if (keyboard.is_key_down(sf::Keyboard::S))
+    else if (keyboard.is_key_down(sf::Keyboard::Key::S))
     {
         movement.y += CAMERA_SPEED;
     }
-    if (keyboard.is_key_down(sf::Keyboard::A))
+    if (keyboard.is_key_down(sf::Keyboard::Key::A))
     {
         movement.x -= CAMERA_SPEED;
     }
-    else if (keyboard.is_key_down(sf::Keyboard::D))
+    else if (keyboard.is_key_down(sf::Keyboard::Key::D))
     {
         movement.x += CAMERA_SPEED;
     }
@@ -143,7 +142,7 @@ void Application::on_fixed_update([[maybe_unused]] sf::Time dt)
             auto next = path_finding_result_current_.visited.front();
             path_finding_result_current_.visited.pop_front();
             path_finding_visualiser_.set_state(next, PathFindingState::Visited);
-            visited_++;
+            visited_count_++;
         }
     }
 }
@@ -161,7 +160,7 @@ void Application::on_render(sf::RenderWindow& window)
     tile_map.draw(window);
 
     // Draw the grid on-top
-    if (!sf::Keyboard::isKeyPressed(sf::Keyboard::F2))
+    if (!sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F2))
     {
         grid_.draw(window);
     }
@@ -266,7 +265,7 @@ void Application::draw_editor_ui()
     auto tile_selection_ui = [&]()
     {
         auto native_handle = tile_map.texture().getNativeHandle();
-        ImTextureID imgui_id = (void*)(intptr_t)native_handle;
+        ImTextureID imgui_id = (ImTextureID)native_handle;
         ImGui::Text("Select Tile");
         for (int tile_id = 0; tile_id < (int)tile_map.tile_type_count() - 2; tile_id++)
         {
@@ -282,8 +281,9 @@ void Application::draw_editor_ui()
                                      : ImVec4{0, 0, 0, 0};
             auto rect =
                 tile.get_normalised_texture_rect(sf::Vector2f{tile_map.texture().getSize()});
-            if (ImGui::ImageButton(tile.name.c_str(), imgui_id, {32, 32}, {rect.left, rect.top},
-                                   {rect.width, rect.height}, button_colour))
+            if (ImGui::ImageButton(tile.name.c_str(), imgui_id, {32, 32},
+                                   {rect.position.x, rect.position.y}, {rect.size.x, rect.size.y},
+                                   button_colour))
             {
                 set_selected_tile(tile.id);
             }
@@ -364,7 +364,7 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
 
         path_finding_result_ = result;
         path_finding_result_current_ = result;
-        visited_ = 0;
+        visited_count_ = 0;
 
         path_finding_visualiser_.clear();
     };
@@ -426,8 +426,13 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
                 path_finding_visualiser_.clear();
             }
 
-            ImGui::Text("%d/%d", visited_, (int)path_finding_result_.visited.size());
-            ImGui::ProgressBar((float)visited_ / (float)path_finding_result_.visited.size());
+            ImGui::Text("%d/%d", visited_count_, (int)path_finding_result_.visited.size());
+            ImGui::ProgressBar((float)visited_count_ / (float)path_finding_result_.visited.size());
+
+            if (visited_count_ == path_finding_result_.visited.size())
+            {
+                ImGui::Text("Path Found: %s", path_finding_result_.finish_found ? "Yes" : "No");
+            }
         }
         else
         {

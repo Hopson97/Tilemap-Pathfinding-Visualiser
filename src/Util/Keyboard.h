@@ -15,6 +15,5 @@ class Keyboard final
     void reset();
 
   private:
-
     std::array<bool, sf::Keyboard::KeyCount> m_keys;
 };

@@ -22,9 +22,9 @@ namespace
 
 PathFindingCostGrid::PathFindingCostGrid()
     : tile_costs_(TILE_MAP_WIDTH, TILE_MAP_HEIGHT)
+    , font_("assets/Fonts/Freshman.ttf")
+    , text_(font_)
 {
-    font_.loadFromFile("assets/Fonts/Freshman.ttf");
-    text_.setFont(font_);
     text_.setCharacterSize(13);
 }
 
@@ -80,7 +80,7 @@ void PathFindingCostGrid::draw(sf::RenderTarget& render_target)
                     current_cost = cost;
                     text_.setString(std::to_string(cost));
                 }
-                text_.setPosition(x * TILE_SIZE + 2, y * TILE_SIZE + 2);
+                text_.setPosition({x * TILE_SIZE + 2, y * TILE_SIZE + 2});
                 render_target.draw(text_);
             }
         }

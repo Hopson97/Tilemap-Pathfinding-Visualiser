@@ -6,7 +6,7 @@
 
 namespace
 {
-    void add_tile(Array2D<sf::Vertex, 4>& tile_vertices, const sf::Vector2i& tile_position)
+    void add_tile(Array2D<sf::Vertex, 6>& tile_vertices, const sf::Vector2i& tile_position)
     {
         float x = static_cast<float>(tile_position.x);
         float y = static_cast<float>(tile_position.y);
@@ -15,12 +15,17 @@ namespace
         tile_vertices.get(i).position = {x * TILE_SIZE, y * TILE_SIZE};
         tile_vertices.get(i + 1).position = {(x + 1.0f) * TILE_SIZE, y * TILE_SIZE};
         tile_vertices.get(i + 2).position = {(x + 1.0f) * TILE_SIZE, (y + 1.0f) * TILE_SIZE};
-        tile_vertices.get(i + 3).position = {x * TILE_SIZE, (y + 1.0f) * TILE_SIZE};
+
+        tile_vertices.get(i + 3).position = {(x + 1.0f) * TILE_SIZE, (y + 1.0f) * TILE_SIZE};
+        tile_vertices.get(i + 4).position = {x * TILE_SIZE, (y + 1.0f) * TILE_SIZE};
+        tile_vertices.get(i + 5).position = {x * TILE_SIZE, y * TILE_SIZE};
 
         tile_vertices.get(i + 0).color = sf::Color::Transparent;
         tile_vertices.get(i + 1).color = sf::Color::Transparent;
         tile_vertices.get(i + 2).color = sf::Color::Transparent;
         tile_vertices.get(i + 3).color = sf::Color::Transparent;
+        tile_vertices.get(i + 4).color = sf::Color::Transparent;
+        tile_vertices.get(i + 5).color = sf::Color::Transparent;
     }
 } // namespace
 
@@ -46,6 +51,8 @@ void TileMapRenderer::set_tile_colour(const sf::Vector2i& tile_position, sf::Col
         tile_vertices_.get(i + 1).color = colour;
         tile_vertices_.get(i + 2).color = colour;
         tile_vertices_.get(i + 3).color = colour;
+        tile_vertices_.get(i + 4).color = colour;
+        tile_vertices_.get(i + 5).color = colour;
     }
 }
 
@@ -54,16 +61,19 @@ void TileMapRenderer::set_tile_texture_rect(const sf::Vector2i& tile_position, c
     if (tile_vertices_.contains(tile_position.x, tile_position.y))
     {
         int i = tile_vertices_.index(tile_position.x, tile_position.y);
-        tile_vertices_.get(i + 0).texCoords = {rect.left, rect.top};
-        tile_vertices_.get(i + 1).texCoords = {rect.left + rect.width, rect.top};
-        tile_vertices_.get(i + 2).texCoords = {rect.left + rect.width, rect.top + rect.height};
-        tile_vertices_.get(i + 3).texCoords = {rect.left, rect.top + rect.height};
+        tile_vertices_.get(i + 0).texCoords = {rect.position.x, rect.position.y};
+        tile_vertices_.get(i + 1).texCoords = {rect.position.x + rect.size.x, rect.position.y};
+        tile_vertices_.get(i + 2).texCoords = {rect.position.x + rect.size.x, rect.position.y + rect.size.y};
+
+        tile_vertices_.get(i + 3).texCoords = {rect.position.x + rect.size.x, rect.position.y + rect.size.y};
+        tile_vertices_.get(i + 4).texCoords = {rect.position.x, rect.position.y + rect.size.y};
+        tile_vertices_.get(i + 5).texCoords = {rect.position.x, rect.position.y};
     }
 }
 
 void TileMapRenderer::draw(sf::RenderTarget& render_target, const sf::RenderStates& states)
 {
-    render_target.draw(tile_vertices_.data(), tile_vertices_.size(), sf::Quads, states);
+    render_target.draw(tile_vertices_.data(), tile_vertices_.size(), sf::PrimitiveType::Triangles, states);
 }
 
 sf::Vector2i world_to_tile_position(const sf::Vector2f world_position)
@@ -89,5 +99,5 @@ TileMapGrid::TileMapGrid()
 
 void TileMapGrid::draw(sf::RenderTarget& render_target)
 {
-    render_target.draw(grid_vertices_.data(), grid_vertices_.size(), sf::Lines);
+    render_target.draw(grid_vertices_.data(), grid_vertices_.size(), sf::PrimitiveType::Lines);
 }

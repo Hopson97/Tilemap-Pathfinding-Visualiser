@@ -1,6 +1,7 @@
 #include "Profiler.h"
 
 #include <imgui.h>
+#include <SFML/System/Time.hpp>
 
 namespace
 {

@@ -312,7 +312,7 @@ void TileMap::update_foreground_tile_variation(const sf::Vector2i& tile_position
         }
     }
     auto texture_rect = tile.texture_rect;
-    texture_rect.left = variation * TEXTURE_SIZE;
+    texture_rect.position.x = variation * TEXTURE_SIZE;
     renderer_foreground_.set_tile_texture_rect(tile_position, texture_rect);
 }
 
@@ -335,7 +335,7 @@ void TileMap::update_background_tile_variation(const sf::Vector2i& tile_position
         }
     }
     auto texture_rect = tile.texture_rect;
-    texture_rect.left = variation * TEXTURE_SIZE;
+    texture_rect.position.x = variation * TEXTURE_SIZE;
     renderer_background_.set_tile_texture_rect(tile_position, texture_rect);
 }
 

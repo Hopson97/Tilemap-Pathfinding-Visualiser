@@ -5,30 +5,27 @@ Keyboard::Keyboard()
     reset();
 }
 
-void Keyboard::update(const sf::Event& e)
+void Keyboard::update(const sf::Event& event)
 {
-    switch (e.type)
+    if (auto* key = event.getIf<sf::Event::KeyPressed>())
     {
-        case sf::Event::KeyReleased:
-            if (e.key.code == -1)
-                return;
-            m_keys[e.key.code] = false;
-            break;
-
-        case sf::Event::KeyPressed:
-            if (e.key.code == -1)
-                return;
-            m_keys[e.key.code] = true;
-            break;
-
-        default:
-            break;
+        if ((size_t)key->code < m_keys.size())
+        {
+            m_keys[(size_t)key->code] = true;
+        }
+    }
+    else if (auto* key = event.getIf<sf::Event::KeyReleased>())
+    {
+        if ((size_t)key->code < m_keys.size())
+        {
+            m_keys[(size_t)key->code] = false;
+        }
     }
 }
 
 bool Keyboard::is_key_down(sf::Keyboard::Key key) const
 {
-    return m_keys[key];
+    return m_keys[(size_t)key];
 }
 
 void Keyboard::reset()

@@ -15,12 +15,13 @@
 
 namespace
 {
-    void handle_event(const sf::Event& e, sf::Window& window, bool& show_debug);
+    void handle_event(const sf::Event& event, sf::Window& window, bool& show_debug_info,
+                      bool& close_requested);
 } // namespace
 
 int main()
 {
-    sf::RenderWindow window({1600, 900},
+    sf::RenderWindow window(sf::VideoMode({1600, 900}),
                             "Path Finding Visualiser - Press F1 for debug - Press F2 to hide grid");
     window.setVerticalSyncEnabled(true);
     window.setActive(true);
@@ -34,6 +35,7 @@ int main()
     TimeStep fixed_updater{50};
     Profiler profiler;
     bool show_debug = false;
+    bool c = false;
 
     Application app{window};
     Keyboard keyboard;
@@ -41,14 +43,16 @@ int main()
     sf::Clock clock;
     while (window.isOpen())
     {
-        for (sf::Event e{}; window.pollEvent(e);)
-        {
-            ImGui::SFML::ProcessEvent(e);
-            keyboard.update(e);
-            app.on_event(e);
-            handle_event(e, window, show_debug);
-        }
+        bool close_requested = false;
         auto dt = clock.restart();
+        while (auto event = window.pollEvent())
+        {
+            ImGui::SFML::ProcessEvent(window, *event);
+            keyboard.update(*event);
+            app.on_event(*event);
+            handle_event(*event, window, show_debug, close_requested);
+        }
+
 
         // Update
 
@@ -84,6 +88,10 @@ int main()
         // End frame
         ImGui::SFML::Render(window);
         window.display();
+        if (close_requested)
+        {
+            window.close();
+        }
     }
 
     app.save_tile_maps();
@@ -93,32 +101,28 @@ int main()
 
 namespace
 {
-    void handle_event(const sf::Event& e, sf::Window& window, bool& show_debug)
+    void handle_event(const sf::Event& event, sf::Window& window, bool& show_debug_info,
+                      bool& close_requested)
     {
-        switch (e.type)
+        if (event.is<sf::Event::Closed>())
         {
-            case sf::Event::Closed:
-                window.close();
-                break;
+            close_requested = true;
+        }
+        else if (auto* key = event.getIf<sf::Event::KeyPressed>())
+        {
+            switch (key->code)
+            {
+                case sf::Keyboard::Key::Escape:
+                    close_requested = true;
+                    break;
 
-            case sf::Event::KeyReleased:
-                switch (e.key.code)
-                {
-                    case sf::Keyboard::Escape:
-                        window.close();
-                        break;
+                case sf::Keyboard::Key::F1:
+                    show_debug_info = !show_debug_info;
+                    break;
 
-                    case sf::Keyboard::F1:
-                        show_debug = !show_debug;
-                        break;
-
-                    default:
-                        break;
-                }
-                break;
-
-            default:
-                break;
+                default:
+                    break;
+            }
         }
     }
 } // namespace
