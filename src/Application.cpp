@@ -109,7 +109,7 @@ void Application::on_event(const sf::Event& e)
 void Application::on_update(const Keyboard& keyboard, sf::Time dt)
 {
     // Move camera
-    int CAMERA_SPEED = 15;
+    float CAMERA_SPEED = 15.0f;
     sf::Vector2f movement;
     if (keyboard.is_key_down(sf::Keyboard::W))
     {

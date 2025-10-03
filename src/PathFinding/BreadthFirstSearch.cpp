@@ -1,7 +1,6 @@
 #include "PathFindingAlgorithms.h"
 
 #include <print>
-#include <unordered_map>
 
 #include "PathFindingCostGrid.h"
 
@@ -11,16 +10,12 @@ PathFindingResult breadth_first_search(const PathFindingCostGrid& grid, const sf
     PathFindingResult result;
 
     // The current queue of tiles to next be processed
-    std::deque<sf::Vector2i> queue;
-
-    // Keep track of where each visited node came from so the path can be constructed
-    std::unordered_map<sf::Vector2i, sf::Vector2i, HashVec2> came_from;
+    std::deque<PathfindingNode> queue;
 
     // Push the start to the queue as the starting point of the search
-    queue.push_back(start);
+    queue.push_back({start, 0});
     result.visited.push_back(start);
 
-    bool found = false;
     while (!queue.empty())
     {
         // Get the next item in the queue
@@ -28,8 +23,9 @@ PathFindingResult breadth_first_search(const PathFindingCostGrid& grid, const sf
         queue.pop_front();
 
         // Goal found, exit
-        if (current == finish || found)
+        if (current.position == finish || result.finish_found)
         {
+            result.finish_found = true;
             break;
         }
 
@@ -37,19 +33,18 @@ PathFindingResult breadth_first_search(const PathFindingCostGrid& grid, const sf
         for (const auto& neighbour : NEIGHBOUR_TILES)
         {
             // Check if the tile was visited - add to the queue if it not
-            const auto next_tile = current + neighbour;
-            if (came_from.find(next_tile) == came_from.end() &&
-                grid.traversable(current, next_tile))
+            const auto next_tile = current.position + neighbour;
+            if (result.came_from.find(next_tile) == result.came_from.end() &&
+                grid.traversable(current.position, next_tile))
             {
-                came_from[next_tile] = current;
-                queue.push_back(next_tile);
-                result.visited.push_back(next_tile);
+                queue.push_back({next_tile, grid.get_cost(next_tile)});
+                result.push_node(current, next_tile);
             }
 
             // Goal found, exit
             if (next_tile == finish)
             {
-                found = true;
+                result.finish_found = true;
                 break;
             }
         }

@@ -83,5 +83,5 @@ class Application
     // visited/ pathing nodes are added to it.
     PathFindingResult path_finding_result_current_;
 
-    int visited_ = 0;
+    int visited_count_ = 0;
 };
