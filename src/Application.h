@@ -78,6 +78,7 @@ class Application
 
     // The actual result from the path finding algorithm
     PathFindingResult path_finding_result_;
+    std::deque<sf::Vector2i> final_path_;
 
     // A copy of the result that is used to update the visualiser using FIFO to remove as
     // visited/ pathing nodes are added to it.

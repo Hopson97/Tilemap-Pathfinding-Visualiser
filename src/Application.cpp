@@ -133,7 +133,6 @@ void Application::on_update(const Keyboard& keyboard, sf::Time dt)
 
 void Application::on_fixed_update([[maybe_unused]] sf::Time dt)
 {
-    // TODO
     if (path_finding_config_.visualiser_playing)
     {
         // Each update, highlight the currently visited node, FIFO from the pathing algorithm
@@ -143,6 +142,13 @@ void Application::on_fixed_update([[maybe_unused]] sf::Time dt)
             path_finding_result_current_.visited.pop_front();
             path_finding_visualiser_.set_state(next, PathFindingState::Visited);
             visited_count_++;
+        }
+        else if (!final_path_.empty())
+        {
+            // Draw the path!
+            auto next = final_path_.front();
+            final_path_.pop_front();
+            path_finding_visualiser_.set_state(next, PathFindingState::Path);
         }
     }
 }
@@ -356,6 +362,8 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
 {
     assert(p_active_tile_map_);
     auto& tile_map = *p_active_tile_map_;
+    auto start = tile_map.start_position();
+    auto finish = tile_map.finish_position();
 
     auto reset_visualiser = [&](const PathFindingResult& result)
     {
@@ -367,6 +375,7 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
         visited_count_ = 0;
 
         path_finding_visualiser_.clear();
+        final_path_ = result.create_path(*start, *finish);
     };
 
     if (ImGui::Begin("Path Finding"))
@@ -383,8 +392,7 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
 
         ImGui::Separator();
 
-        auto start = tile_map.start_position();
-        auto finish = tile_map.finish_position();
+
 
         if (start && finish)
         {
@@ -394,12 +402,12 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
                 path_finding_grid_.create_pathing_graph(tile_map, tile_map_kind_);
                 reset_visualiser(breadth_first_search(path_finding_grid_, *start, *finish));
             }
-
+            /*
             if (ImGui::Button("Dijkstra's algorithm"))
             {
                 path_finding_grid_.create_pathing_graph(tile_map, tile_map_kind_);
                 reset_visualiser(dijkstra_algorithm(path_finding_grid_, *start, *finish));
-            }
+            }*/
         }
         else
         {
