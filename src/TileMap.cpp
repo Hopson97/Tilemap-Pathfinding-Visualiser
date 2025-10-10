@@ -236,6 +236,7 @@ bool TileMap::load(const std::filesystem::path path)
             }
         }
     }
+    return true;
 }
 
 void TileMap::set_tile(const sf::Vector2i& tile_position, TileId tile_id, SetTileAction action)

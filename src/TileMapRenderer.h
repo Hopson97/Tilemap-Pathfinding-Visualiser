@@ -5,11 +5,9 @@
 
 #include "Util/Array2D.h"
 
-constexpr float TILE_SIZE = 32.0f;
-constexpr float TEXTURE_SIZE = 8.0f;
+#include "Constants.h"
 
-constexpr int TILE_MAP_WIDTH = 150;
-constexpr int TILE_MAP_HEIGHT = 80;
+
 
 sf::Vector2i world_to_tile_position(const sf::Vector2f world_position);
 

@@ -129,27 +129,58 @@ void Application::on_update(const Keyboard& keyboard, sf::Time dt)
     camera_.velocity += movement;
     camera_.view.move(camera_.velocity * dt.asSeconds());
     camera_.velocity *= 0.95f;
+
+    if (visualisation_state_ == VisualisationState::Following)
+    {
+        follower_.update(dt);
+        if (follower_.finished())
+        {
+            visualisation_state_ = VisualisationState::FollowingDone;
+        }
+    }
 }
 
-void Application::on_fixed_update([[maybe_unused]] sf::Time dt)
+void Application::on_fixed_update(sf::Time dt)
 {
-    if (path_finding_config_.visualiser_playing)
+    if (!path_finding_config_.visualiser_playing)
     {
-        // Each update, highlight the currently visited node, FIFO from the pathing algorithm
-        if (!path_finding_result_current_.visited.empty())
-        {
-            auto next = path_finding_result_current_.visited.front();
-            path_finding_result_current_.visited.pop_front();
-            path_finding_visualiser_.set_state(next, PathFindingState::Visited);
-            visited_count_++;
-        }
-        else if (!final_path_.empty())
-        {
-            // Draw the path!
-            auto next = final_path_.front();
-            final_path_.pop_front();
-            path_finding_visualiser_.set_state(next, PathFindingState::Path);
-        }
+        return;
+    }
+
+    switch (visualisation_state_)
+    {
+        case VisualisationState::Searching:
+            if (!path_finding_result_current_.visited.empty())
+            {
+                // Each update, highlight the currently visited node, FIFO from the pathing
+                // algorithm
+                auto next = path_finding_result_current_.visited.front();
+                path_finding_result_current_.visited.pop_front();
+                path_finding_visualiser_.set_state(next, PathFindingState::Visited);
+                visited_count_++;
+            }
+            else
+            {
+                visualisation_state_ = VisualisationState::Pathing;
+            }
+            break;
+
+        case VisualisationState::Pathing:
+            if (!final_path_.empty() && path_finding_result_current_.finish_found)
+            {
+                // Draw the path!
+                auto next = final_path_.front();
+                final_path_.pop_front();
+                path_finding_visualiser_.set_state(next, PathFindingState::Path);
+            }
+            else
+            {
+                visualisation_state_ = VisualisationState::Following;
+            }
+            break;
+
+        default:
+            break;
     }
 }
 
@@ -196,6 +227,12 @@ void Application::on_render(sf::RenderWindow& window)
 
     // Draw the pathfinding result
     path_finding_visualiser_.draw(window);
+
+    if (visualisation_state_ == VisualisationState::Following ||
+        visualisation_state_ == VisualisationState::FollowingDone)
+    {
+        follower_.draw(window);
+    }
 }
 
 void Application::on_gui(sf::RenderWindow& window, TimeStep& timestep, bool show_debug_info)
@@ -264,7 +301,6 @@ void Application::set_selected_tile(TileId selection)
 
 void Application::draw_editor_ui()
 {
-
     assert(p_active_tile_map_);
     auto& tile_map = *p_active_tile_map_;
 
@@ -367,6 +403,7 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
 
     auto reset_visualiser = [&](const PathFindingResult& result)
     {
+        visualisation_state_ = VisualisationState::Searching;
         path_finding_config_.draw_costs = false;
         path_finding_config_.visualiser_playing = true;
 
@@ -375,7 +412,11 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
         visited_count_ = 0;
 
         path_finding_visualiser_.clear();
-        final_path_ = result.create_path(*start, *finish);
+        if (result.finish_found)
+        {
+            final_path_ = result.create_path(*start, *finish);
+            follower_.follow_path(final_path_);
+        }
     };
 
     if (ImGui::Begin("Path Finding"))
@@ -391,8 +432,6 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
         }
 
         ImGui::Separator();
-
-
 
         if (start && finish)
         {
@@ -419,11 +458,10 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
 
     if (ImGui::Begin("Player"))
     {
-        int tick_rate = timestep.tick_rate();
-        if (ImGui::SliderInt("Pathfinding Speed", &tick_rate, 1, 1000))
-        {
-            timestep.set_tick_rate(tick_rate);
-        }
+
+        ImGui::SliderInt("Exploring Speed", &path_finding_config_.tickrate_searching, 1, 1000);
+        ImGui::SliderInt("Pathing Speed", &path_finding_config_.tickrate_pathing, 1, 1000);
+        //ImGui::SliderInt("Following Speed", &path_finding_config_.tickrate_following, 1, 1000);
 
         if (path_finding_config_.visualiser_playing)
         {
@@ -452,6 +490,22 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
         }
     }
     ImGui::End();
+
+    switch (visualisation_state_)
+    {
+        case VisualisationState::Searching:
+            timestep.set_tick_rate(path_finding_config_.tickrate_searching);
+            break;
+
+        case VisualisationState::Pathing:
+            timestep.set_tick_rate(path_finding_config_.tickrate_pathing);
+
+            break;
+
+        default:
+            //timestep.set_tick_rate(path_finding_config_.tickrate_following);
+            break;
+    }
 }
 
 sf::Vector2i Application::get_brush_size()

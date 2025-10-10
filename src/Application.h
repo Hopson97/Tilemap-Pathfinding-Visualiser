@@ -5,12 +5,13 @@
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/System/Clock.hpp>
 
-#include "TileMap.h"
-#include "TileMapRenderer.h"
-
 #include "PathFinding/PathFindingAlgorithms.h"
 #include "PathFinding/PathFindingCostGrid.h"
 #include "PathFinding/PathFindingVisualiser.h"
+
+#include "PathFollower.h"
+#include "TileMap.h"
+#include "TileMapRenderer.h"
 
 class Keyboard;
 class TimeStep;
@@ -33,6 +34,17 @@ struct PathFindingConfig
 {
     bool draw_costs = false;
     bool visualiser_playing = false;
+
+    int tickrate_searching = 50;
+    int tickrate_pathing = 5;
+};
+
+enum class VisualisationState
+{
+    Searching,
+    Pathing,
+    Following,
+    FollowingDone,
 };
 
 class Application
@@ -84,5 +96,9 @@ class Application
     // visited/ pathing nodes are added to it.
     PathFindingResult path_finding_result_current_;
 
+    PathFollower follower_;
+
     int visited_count_ = 0;
+
+    VisualisationState visualisation_state_ = VisualisationState::Searching;
 };

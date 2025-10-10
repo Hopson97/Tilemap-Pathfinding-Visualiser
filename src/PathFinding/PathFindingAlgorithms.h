@@ -59,6 +59,7 @@ struct PathFindingResult
             path.push_back(current);
             current = came_from.at(current);
         }
+        path.push_back(start);
         return path;
     }
 };

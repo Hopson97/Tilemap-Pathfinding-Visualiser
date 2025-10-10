@@ -9,8 +9,7 @@
 #include "TileType.h"
 #include "TileMapRenderer.h"
 #include "Util/Array2D.h"
-
-const std::array<sf::Vector2i, 4> TILE_OFFSETS = {sf::Vector2i{0, 1}, {-1, 0}, {1, 0}, {0, -1}};
+#include "Constants.h"
 
 enum class TileMapKind
 {

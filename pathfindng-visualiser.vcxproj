@@ -153,6 +153,7 @@
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\PathFinding\PathFindingVisualiser.cpp" />
+    <ClCompile Include="src\PathFollower.cpp" />
     <ClCompile Include="src\TileMap.cpp" />
     <ClCompile Include="src\TileMapRenderer.cpp" />
     <ClCompile Include="src\PathFinding\DijkstrasAlgorithm.cpp" />
@@ -172,10 +173,12 @@
     <ClInclude Include="deps\imgui_sfml\imconfig-SFML.h" />
     <ClInclude Include="deps\imgui_sfml\imgui-SFML.h" />
     <ClInclude Include="deps\imgui_sfml\imgui-SFML_export.h" />
+    <ClInclude Include="src\Constants.h" />
     <ClInclude Include="src\PathFinding\PathFindingAlgorithms.h" />
     <ClInclude Include="src\PathFinding\PathFindingCostGrid.h" />
     <ClInclude Include="src\Application.h" />
     <ClInclude Include="src\PathFinding\PathFindingVisualiser.h" />
+    <ClInclude Include="src\PathFollower.h" />
     <ClInclude Include="src\TileMap.h" />
     <ClInclude Include="src\TileMapRenderer.h" />
     <ClInclude Include="src\TileType.h" />
