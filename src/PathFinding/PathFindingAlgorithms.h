@@ -37,29 +37,29 @@ struct PathFindingResult
     std::deque<sf::Vector2i> visited;
 
     // Keep track of where each visited node came from so the path can be constructed
-    std::unordered_map<sf::Vector2i, sf::Vector2i, HashVec2> came_from;
+    std::unordered_map<sf::Vector2i, PathfindingNode, HashVec2> came_from;
 
     bool finish_found = false;
 
     void push_node(const PathfindingNode& current, const sf::Vector2i& next_node)
     {
-        came_from[next_node] = current.position;
+        came_from[next_node] = current;
         visited.push_back(next_node);
     }
 
     auto create_path(const sf::Vector2i& start, const sf::Vector2i& finish) const
     {
-        std::deque<sf::Vector2i> path;
+        std::deque<PathfindingNode> path;
 
-        auto current = finish;
-        
+        PathfindingNode current{finish, 0};
+
         // Back track through the came_from map until the start is found
-        while (current != start)
+        while (current.position != start)
         {
             path.push_back(current);
-            current = came_from.at(current);
+            current = came_from.at(current.position);
         }
-        path.push_back(start);
+        path.push_back({start, 0});
         return path;
     }
 };

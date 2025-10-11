@@ -171,7 +171,9 @@ void Application::on_fixed_update(sf::Time dt)
                 // Draw the path!
                 auto next = final_path_.front();
                 final_path_.pop_front();
-                path_finding_visualiser_.set_state(next, PathFindingState::Path);
+                path_finding_visualiser_.set_state(next.position, PathFindingState::Path);
+                
+
             }
             else
             {
@@ -503,7 +505,7 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
             break;
 
         default:
-            //timestep.set_tick_rate(path_finding_config_.tickrate_following);
+            // timestep.set_tick_rate(path_finding_config_.tickrate_following);
             break;
     }
 }

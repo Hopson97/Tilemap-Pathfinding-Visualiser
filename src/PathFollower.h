@@ -7,6 +7,8 @@
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/System/Time.hpp>
 
+#include "PathFinding/PathFindingAlgorithms.h"
+
 struct PositionLerper
 {
     sf::Vector2f start;
@@ -45,7 +47,7 @@ class PathFollower
   public:
     PathFollower();
 
-    void follow_path(const std::deque<sf::Vector2i>& path);
+    void follow_path(const std::deque<PathfindingNode>& path);
 
     void update(sf::Time time);
     void draw(sf::RenderWindow& window);
@@ -55,11 +57,11 @@ class PathFollower
   private:
     void begin_next_move();
 
-    sf::Vector2f peek_next();
+    sf::Vector2f front_position();
 
     sf::Texture texture_;
     sf::RectangleShape sprite_;
-    std::deque<sf::Vector2i> path_;
+    std::deque<PathfindingNode> path_;
 
     PositionLerper lerper_;
 
