@@ -39,6 +39,20 @@ struct PathFindingConfig
     int tickrate_pathing = 5;
 };
 
+struct PathFindingStats
+{
+    // The number of tiles explored so far
+    int visited_count = 0;
+
+    // The cost of the path so far when creating the path
+    int path_created_cost = 0;
+    int path_created_length = 0;
+
+    // The actual total cost of the path
+    int total_path_length = 0;
+    int total_path_cost = 0;
+};
+
 enum class VisualisationState
 {
     Searching,
@@ -98,7 +112,8 @@ class Application
 
     PathFollower follower_;
 
-    int visited_count_ = 0;
+    PathFindingStats stats_;
+
 
     VisualisationState visualisation_state_ = VisualisationState::Searching;
 };

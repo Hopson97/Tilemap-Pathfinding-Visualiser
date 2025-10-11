@@ -1,5 +1,6 @@
 #include "Application.h"
 
+#include <numeric>
 #include <print>
 
 #include <SFML/Window/Event.hpp>
@@ -16,6 +17,14 @@ namespace
 
     constexpr const char* DEFAULT_SIDE_VIEW_FILE = "./data/default_side_view_map.txt";
     constexpr const char* DEFAULT_TOP_VIEW_FILE = "./data/default_top_view_map.txt";
+
+    template <typename Stat, typename TotalType>
+    void draw_progress_bar(const char* label, Stat so_far, TotalType total)
+    {
+        ImGui::Text(label, so_far, total);
+        ImGui::ProgressBar(static_cast<float>(so_far) / static_cast<float>(total));
+    }
+
 } // namespace
 
 Application::Application(const sf::RenderWindow& window)
@@ -157,7 +166,7 @@ void Application::on_fixed_update(sf::Time dt)
                 auto next = path_finding_result_current_.visited.front();
                 path_finding_result_current_.visited.pop_front();
                 path_finding_visualiser_.set_state(next, PathFindingState::Visited);
-                visited_count_++;
+                stats_.visited_count++;
             }
             else
             {
@@ -172,8 +181,9 @@ void Application::on_fixed_update(sf::Time dt)
                 auto next = final_path_.front();
                 final_path_.pop_front();
                 path_finding_visualiser_.set_state(next.position, PathFindingState::Path);
-                
 
+                stats_.path_created_cost += next.cost;
+                stats_.path_created_length++;
             }
             else
             {
@@ -411,14 +421,19 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
 
         path_finding_result_ = result;
         path_finding_result_current_ = result;
-        visited_count_ = 0;
-
         path_finding_visualiser_.clear();
+
         if (result.finish_found)
         {
             final_path_ = result.create_path(*start, *finish);
             follower_.follow_path(final_path_);
         }
+
+        stats_ = PathFindingStats{};
+        stats_.total_path_length = final_path_.size();
+        stats_.total_path_cost =
+            std::accumulate(final_path_.begin(), final_path_.end(), 0,
+                            [](auto sum, const auto& node) { return sum + node.cost; });
     };
 
     if (ImGui::Begin("Path Finding"))
@@ -443,12 +458,12 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
                 path_finding_grid_.create_pathing_graph(tile_map, tile_map_kind_);
                 reset_visualiser(breadth_first_search(path_finding_grid_, *start, *finish));
             }
-            /*
+
             if (ImGui::Button("Dijkstra's algorithm"))
             {
                 path_finding_grid_.create_pathing_graph(tile_map, tile_map_kind_);
                 reset_visualiser(dijkstra_algorithm(path_finding_grid_, *start, *finish));
-            }*/
+            }
         }
         else
         {
@@ -463,7 +478,7 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
 
         ImGui::SliderInt("Exploring Speed", &path_finding_config_.tickrate_searching, 1, 1000);
         ImGui::SliderInt("Pathing Speed", &path_finding_config_.tickrate_pathing, 1, 1000);
-        //ImGui::SliderInt("Following Speed", &path_finding_config_.tickrate_following, 1, 1000);
+        // ImGui::SliderInt("Following Speed", &path_finding_config_.tickrate_following, 1, 1000);
 
         if (path_finding_config_.visualiser_playing)
         {
@@ -474,12 +489,17 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
                 path_finding_visualiser_.clear();
             }
 
-            ImGui::Text("%d/%d", visited_count_, (int)path_finding_result_.visited.size());
-            ImGui::ProgressBar((float)visited_count_ / (float)path_finding_result_.visited.size());
+            draw_progress_bar("Search Progress: %d/%d tiles", stats_.visited_count,
+                              path_finding_result_.visited.size());
 
-            if (visited_count_ == path_finding_result_.visited.size())
+            if (stats_.visited_count == path_finding_result_.visited.size())
             {
                 ImGui::Text("Path Found: %s", path_finding_result_.finish_found ? "Yes" : "No");
+                ImGui::Separator();
+                draw_progress_bar("Creating path: %d/%d path tiles", stats_.path_created_length,
+                                  stats_.total_path_length);
+                draw_progress_bar("Path cost so far: %d/%d", stats_.path_created_cost,
+                                  stats_.total_path_cost);
             }
         }
         else
