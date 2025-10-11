@@ -89,7 +89,7 @@ PathFindingResult dijkstra_algorithm(const PathFindingCostGrid& grid, const sf::
             // Goal found, exit
             if (next_tile == finish)
             {
-                result.finish_found = true;
+                result.set_finish_found(current, finish);
                 break;
             }
         }

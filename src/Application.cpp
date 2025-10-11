@@ -487,6 +487,7 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
                 path_finding_config_.draw_costs = false;
                 path_finding_config_.visualiser_playing = false;
                 path_finding_visualiser_.clear();
+                visualisation_state_ = VisualisationState::Searching;
             }
 
             draw_progress_bar("Search Progress: %d/%d tiles", stats_.visited_count,

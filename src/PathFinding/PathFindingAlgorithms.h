@@ -62,6 +62,17 @@ struct PathFindingResult
         path.push_back({start, 0});
         return path;
     }
+
+    void set_finish_found(const PathfindingNode& current, const sf::Vector2i& finish)
+    {
+        // Ensure the finish is actually in the "came_from" map such that a complete path can be
+        // created
+        if (came_from.find(finish) == came_from.end())
+        {
+            push_node(current, finish);
+        }
+        finish_found = true;
+    }
 };
 
 // All neighbour offsets (vertical, horizontal, and diagonal.
