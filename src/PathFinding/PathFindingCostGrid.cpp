@@ -48,19 +48,6 @@ void PathFindingCostGrid::create_pathing_graph(const TileMap& tilemap, TileMapKi
             }
         }
     }
-
-    // Ensure start and finish positions are _always_ walkable if they exist
-    auto start = tilemap.start_position();
-    if (start)
-    {
-        set_tile_cost(*start, 0);
-    }
-
-    auto finish = tilemap.finish_position();
-    if (finish)
-    {
-        set_tile_cost(*finish, 0);
-    }
 }
 
 void PathFindingCostGrid::draw(sf::RenderTarget& render_target)

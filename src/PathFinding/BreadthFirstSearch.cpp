@@ -7,13 +7,13 @@
 PathFindingResult breadth_first_search(const PathFindingCostGrid& grid, const sf::Vector2i& start,
                                        const sf::Vector2i& finish)
 {
-    PathFindingResult result;
+    PathFindingResult result{{start, grid.get_cost(start)}, {finish, grid.get_cost(finish)}};
 
     // The current queue of tiles to next be processed
     std::deque<PathfindingNode> queue;
 
     // Push the start to the queue as the starting point of the search
-    queue.push_back({start, 0});
+    queue.push_back({start, grid.get_cost(start)});
     result.visited.push_back(start);
 
     while (!queue.empty())
@@ -44,7 +44,7 @@ PathFindingResult breadth_first_search(const PathFindingCostGrid& grid, const sf
             // Goal found, exit
             if (next_tile == finish)
             {
-                result.set_finish_found(current, finish);
+                result.set_finish_found(current);
                 break;
             }
         }

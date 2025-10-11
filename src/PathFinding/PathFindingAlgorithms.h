@@ -34,6 +34,15 @@ struct ComparePathfindingNodeCosts
 
 struct PathFindingResult
 {
+    PathFindingResult() = default;
+    PathFindingResult(PathfindingNode start, PathfindingNode finish);
+
+    void push_node(const PathfindingNode& current, const sf::Vector2i& next_node);
+
+    std::deque<PathfindingNode> create_path() const;
+
+    void set_finish_found(const PathfindingNode& current);
+
     std::deque<sf::Vector2i> visited;
 
     // Keep track of where each visited node came from so the path can be constructed
@@ -41,38 +50,8 @@ struct PathFindingResult
 
     bool finish_found = false;
 
-    void push_node(const PathfindingNode& current, const sf::Vector2i& next_node)
-    {
-        came_from[next_node] = current;
-        visited.push_back(next_node);
-    }
-
-    auto create_path(const sf::Vector2i& start, const sf::Vector2i& finish) const
-    {
-        std::deque<PathfindingNode> path;
-
-        PathfindingNode current{finish, 0};
-
-        // Back track through the came_from map until the start is found
-        while (current.position != start)
-        {
-            path.push_back(current);
-            current = came_from.at(current.position);
-        }
-        path.push_back({start, 0});
-        return path;
-    }
-
-    void set_finish_found(const PathfindingNode& current, const sf::Vector2i& finish)
-    {
-        // Ensure the finish is actually in the "came_from" map such that a complete path can be
-        // created
-        if (came_from.find(finish) == came_from.end())
-        {
-            push_node(current, finish);
-        }
-        finish_found = true;
-    }
+    PathfindingNode start;
+    PathfindingNode finish;
 };
 
 // All neighbour offsets (vertical, horizontal, and diagonal.

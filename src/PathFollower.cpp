@@ -1,7 +1,8 @@
 #include "PathFollower.h"
 
-#include "Constants.h"
 #include <print>
+
+#include "Constants.h"
 
 PathFollower::PathFollower()
     : texture_{"assets/Textures/Character.png"}
@@ -14,8 +15,6 @@ void PathFollower::follow_path(const std::deque<PathfindingNode>& path)
 {
     path_ = path;
     std::reverse(path_.begin(), path_.end());
-    auto pos = front_position();
-    std::println("Setting sprtie position {} {}", pos.x, pos.y);
     sprite_.setPosition(front_position());
     lerper_ = PositionLerper{};
 }
@@ -51,12 +50,8 @@ void PathFollower::begin_next_move()
         {
             auto next = front_position();
             auto cost = path_.front().cost;
-
-
-
             lerper_.start_lerp(current, next, sf::milliseconds(std::sqrt(cost * 4) * 45));
         }
-
     }
 }
 

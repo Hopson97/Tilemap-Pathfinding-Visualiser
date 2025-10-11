@@ -9,6 +9,8 @@
 
 #include "PathFinding/PathFindingAlgorithms.h"
 
+#include <print>
+
 struct PositionLerper
 {
     sf::Vector2f start;
@@ -24,6 +26,8 @@ struct PositionLerper
         this->duration = duration;
 
         elapsed = sf::Time::Zero;
+        std::println("Lerping from {} {}  to  {} {}  in  {}s ", start.x, start.y, end.x, end.y,
+                     duration.asSeconds());
     }
 
     sf::Vector2f lerp(sf::Time dt)

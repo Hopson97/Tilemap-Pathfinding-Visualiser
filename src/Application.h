@@ -75,6 +75,8 @@ class Application
     void save_tile_maps();
 
   private:
+    void reset_visualiser(const PathFindingResult& result);
+
     void set_tile_map_kind(TileMapKind kind);
     void set_selected_tile(TileId selection);
     void draw_editor_ui();

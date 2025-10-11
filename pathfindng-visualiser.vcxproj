@@ -149,6 +149,7 @@
   <ItemGroup>
     <ClCompile Include="deps\imgui_sfml\imgui-SFML.cpp" />
     <ClCompile Include="src\PathFinding\BreadthFirstSearch.cpp" />
+    <ClCompile Include="src\PathFinding\PathFindingAlgorithms.cpp" />
     <ClCompile Include="src\PathFinding\PathFindingCostGrid.cpp" />
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\main.cpp" />

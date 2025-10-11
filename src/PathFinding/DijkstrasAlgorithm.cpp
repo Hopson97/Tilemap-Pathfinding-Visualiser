@@ -31,7 +31,7 @@ namespace
 PathFindingResult dijkstra_algorithm(const PathFindingCostGrid& grid, const sf::Vector2i& start,
                                      const sf::Vector2i& finish)
 {
-    PathFindingResult result;
+    PathFindingResult result{{start, grid.get_cost(start)}, {finish, grid.get_cost(finish)}};
 
     // The current queue of tiles to next be processed,
     std::priority_queue<DijkstraPathingNode, std::vector<DijkstraPathingNode>,
@@ -42,7 +42,7 @@ PathFindingResult dijkstra_algorithm(const PathFindingCostGrid& grid, const sf::
     std::unordered_map<sf::Vector2i, int, HashVec2> cost_so_far;
 
     // Push the start to the queue as the starting point of the search
-    queue.push({start, 0, 0});
+    queue.push({start, grid.get_cost(start), grid.get_cost(start)});
     cost_so_far[start] = 0;
     result.visited.push_back(start);
 
@@ -89,7 +89,7 @@ PathFindingResult dijkstra_algorithm(const PathFindingCostGrid& grid, const sf::
             // Goal found, exit
             if (next_tile == finish)
             {
-                result.set_finish_found(current, finish);
+                result.set_finish_found(current);
                 break;
             }
         }

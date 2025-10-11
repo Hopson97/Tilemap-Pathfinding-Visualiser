@@ -271,6 +271,29 @@ void Application::save_tile_maps()
     tile_map_top_view_.save("./data/default_top_view_map.txt");
 }
 
+void Application::reset_visualiser(const PathFindingResult& result)
+{
+    visualisation_state_ = VisualisationState::Searching;
+    path_finding_config_.draw_costs = false;
+    path_finding_config_.visualiser_playing = true;
+
+    path_finding_result_ = result;
+    path_finding_result_current_ = result;
+    path_finding_visualiser_.clear();
+
+    if (result.finish_found)
+    {
+        final_path_ = result.create_path();
+        follower_.follow_path(final_path_);
+    }
+
+    stats_ = PathFindingStats{};
+    stats_.total_path_length = final_path_.size();
+    stats_.total_path_cost =
+        std::accumulate(final_path_.begin(), final_path_.end(), 0,
+                        [](auto sum, const auto& node) { return sum + node.cost; });
+}
+
 void Application::set_tile_map_kind(TileMapKind map_kind)
 {
     switch (map_kind)
@@ -412,29 +435,6 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
     auto& tile_map = *p_active_tile_map_;
     auto start = tile_map.start_position();
     auto finish = tile_map.finish_position();
-
-    auto reset_visualiser = [&](const PathFindingResult& result)
-    {
-        visualisation_state_ = VisualisationState::Searching;
-        path_finding_config_.draw_costs = false;
-        path_finding_config_.visualiser_playing = true;
-
-        path_finding_result_ = result;
-        path_finding_result_current_ = result;
-        path_finding_visualiser_.clear();
-
-        if (result.finish_found)
-        {
-            final_path_ = result.create_path(*start, *finish);
-            follower_.follow_path(final_path_);
-        }
-
-        stats_ = PathFindingStats{};
-        stats_.total_path_length = final_path_.size();
-        stats_.total_path_cost =
-            std::accumulate(final_path_.begin(), final_path_.end(), 0,
-                            [](auto sum, const auto& node) { return sum + node.cost; });
-    };
 
     if (ImGui::Begin("Path Finding"))
     {
