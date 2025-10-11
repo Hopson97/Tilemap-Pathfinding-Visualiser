@@ -53,9 +53,7 @@ int main()
             handle_event(*event, window, show_debug, close_requested);
         }
 
-
         // Update
-
         {
             auto& update_profiler = profiler.begin_section("Update");
             ImGui::SFML::Update(window, dt);

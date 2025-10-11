@@ -4,6 +4,31 @@
 
 #include "Constants.h"
 
+void PositionLerper::start_lerp(sf::Vector2f start, sf::Vector2f end, sf::Time duration)
+
+{
+    this->start = start;
+    this->end = end;
+    this->duration = duration;
+    elapsed = sf::Time::Zero;
+}
+
+sf::Vector2f PositionLerper::lerp(sf::Time dt)
+{
+    elapsed += dt;
+    auto t = elapsed.asSeconds() / duration.asSeconds();
+    return {
+        std::lerp(start.x, end.x, t),
+        std::lerp(start.y, end.y, t),
+    };
+}
+
+bool PositionLerper::is_done() const
+
+{
+    return elapsed >= duration;
+}
+
 PathFollower::PathFollower()
     : texture_{"assets/Textures/Character.png"}
     , sprite_({TILE_SIZE, TILE_SIZE * 2})
@@ -23,7 +48,7 @@ void PathFollower::update(sf::Time dt)
 {
     sprite_.setPosition(lerper_.lerp(dt));
 
-    if (lerper_.done())
+    if (lerper_.is_done())
     {
         sprite_.setPosition(lerper_.end);
         begin_next_move();
