@@ -24,7 +24,6 @@ sf::Vector2f PositionLerper::lerp(sf::Time dt)
 }
 
 bool PositionLerper::is_done() const
-
 {
     return elapsed >= duration;
 }

@@ -26,7 +26,7 @@ int main()
     window.setVerticalSyncEnabled(true);
     window.setActive(true);
 
-    if (!ImGui::SFML::Init(window))
+    if (!ImGui::SFML::Init(window, true))
     {
         std::println(std::cerr, "Failed to init ImGUI::SFML.");
         return EXIT_FAILURE;
