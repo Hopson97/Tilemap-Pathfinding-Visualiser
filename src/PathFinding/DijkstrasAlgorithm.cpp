@@ -72,7 +72,7 @@ PathFindingResult dijkstra_algorithm(const PathFindingCostGrid& grid, const sf::
             // Check if the tile has been visited
             // If it has, check the total cost - the new cost from a different direction might
             // be a "cheaper" path
-            bool visted = result.came_from.find(next_tile) != result.came_from.end();
+            bool visted = !result.came_from.contains(next_tile);
             if (!visted && grid.traversable(current.position, next_tile) ||
                 visted && total_cost < cost_so_far[next_tile])
             {

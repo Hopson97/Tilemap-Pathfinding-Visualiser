@@ -34,7 +34,7 @@ PathFindingResult breadth_first_search(const PathFindingCostGrid& grid, const sf
         {
             // Check if the tile was visited - add to the queue if it not
             const auto next_tile = current.position + neighbour;
-            if (result.came_from.find(next_tile) == result.came_from.end() &&
+            if (!result.came_from.contains(next_tile) &&
                 grid.traversable(current.position, next_tile))
             {
                 queue.push_back({next_tile, grid.get_cost(next_tile)});
