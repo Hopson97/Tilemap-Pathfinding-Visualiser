@@ -375,7 +375,8 @@ void Application::draw_editor_ui()
     auto sliders_ui = [&]()
     {
         ImGui::Text("Select Tile Brush Size");
-        ImGui::SliderInt2("Brush Size", &editor_config_.brush_size.x, 1, 12);
+        ImGui::SliderInt("Brush Width", &editor_config_.brush_size.x, 1, 12);
+        ImGui::SliderInt("Brush Height", &editor_config_.brush_size.y, 1, 12);
     };
 
     if (!path_finding_config_.visualiser_playing)
@@ -438,6 +439,11 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
                 if (ImGui::Button("Stop"))
                 {
                     path_finding_config_.visualiser_playing = false;
+                    path_finding_results_.clear();
+                    for (auto& option : pathfinding_algorithms_)
+                    {
+                        option.is_added = false;
+                    }
                 }
 
                 for (auto& result : path_finding_results_)

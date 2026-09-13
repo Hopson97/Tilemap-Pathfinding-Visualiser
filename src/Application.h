@@ -75,6 +75,7 @@ class Application
 
     void display_add_or_remove_algorithm_gui();
 
+
     /// Gets the brush size, either will be the editor one or 1 if the tile is "special"
     sf::Vector2i get_brush_size();
 
