@@ -19,7 +19,7 @@ struct Camera
     sf::View view;
     sf::Vector2f velocity;
 
-    float zoom_level = 1.0f;
+    float zoom_level = 0.5f;
 };
 
 struct EditorConfig
@@ -31,6 +31,7 @@ struct EditorConfig
 struct PathFindingConfig
 {
     bool draw_costs = false;
+    bool draw_grid = false;
     bool visualiser_playing = false;
 
     int tickrate_searching = 50;
@@ -45,7 +46,12 @@ struct PathFindingAlgorithmOption
     PathFindingAlgorithmFunction algorithm;
     const char* name;
     AlgorithmType type;
+
+    sf::Color visited_colour;
+    sf::Color path_colour;
+
     bool is_added = false;
+
 };
 
 class Application

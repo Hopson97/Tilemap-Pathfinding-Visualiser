@@ -31,7 +31,8 @@ class PathFindingVisualiser
     void clear();
 
     void set_state(sf::Vector2i& tile_position, PathFindingState state);
-    void draw(sf::RenderTarget& render_target);
+    void draw_visited(sf::RenderTarget& render_target);
+    void draw_path(sf::RenderTarget& render_target);
 
     PathFindingVisualiserConfig config;
 

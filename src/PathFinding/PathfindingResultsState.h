@@ -33,8 +33,9 @@ struct PathFindingResultsState
 
     void update(sf::Time dt);
     void fixed_update(sf::Time dt);
-    void render_tile_layers(sf::RenderWindow& window);
-    void render_follower(sf::RenderWindow& window);
+    void draw_visited(sf::RenderWindow& window);
+    void draw_path(sf::RenderWindow& window);
+    void draw_follower(sf::RenderWindow& window);
 
     void results_gui();
     void config_gui();
@@ -45,6 +46,8 @@ struct PathFindingResultsState
     const VisualisationState get_visualisation_state() const;
     const char* get_name() const;
     AlgorithmType get_type() const;
+
+    PathFindingVisualiserConfig& get_visual_config();
 
   private:
     // The actual result from the path finding algorithm

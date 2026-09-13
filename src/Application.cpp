@@ -42,11 +42,15 @@ Application::Application(const sf::RenderWindow& window)
             .algorithm = breadth_first_search,
             .name = "Breadth First Search",
             .type = AlgorithmType::BreadthFirstSearch,
+            .visited_colour = {50, 100, 255, 128},
+            .path_colour = {0, 255, 255, 128},
         },
         PathFindingAlgorithmOption{
             .algorithm = dijkstra_algorithm,
             .name = "Dijkstra's Algorithm",
             .type = AlgorithmType::DijkstrasAlgorithm,
+            .visited_colour = {200, 205, 155, 128},
+            .path_colour = {0, 128, 255, 255},
         },
     };
 }
@@ -196,7 +200,7 @@ void Application::on_render(sf::RenderWindow& window)
     tile_map.draw(window);
 
     // Draw the grid on-top
-    if (!sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F2))
+    if (!path_finding_config_.draw_grid)
     {
         grid_.draw(window);
     }
@@ -222,15 +226,19 @@ void Application::on_render(sf::RenderWindow& window)
     {
         path_finding_grid_.draw(window);
     }
-        
+
     // Ensure the followers are rendered on top of the visualisation grid
     for (auto& result : path_finding_results_)
     {
-        result.render_tile_layers(window);
+        result.draw_visited(window);
     }
     for (auto& result : path_finding_results_)
     {
-        result.render_follower(window);
+        result.draw_path(window);
+    }
+    for (auto& result : path_finding_results_)
+    {
+        result.draw_follower(window);
     }
 }
 
@@ -367,15 +375,13 @@ void Application::draw_editor_ui()
     auto sliders_ui = [&]()
     {
         ImGui::Text("Select Tile Brush Size");
-        ImGui::SliderInt("X Size", &editor_config_.brush_size.x, 1, 12);
-        ImGui::SliderInt("Y Size", &editor_config_.brush_size.y, 1, 12);
+        ImGui::SliderInt2("Brush Size", &editor_config_.brush_size.x, 1, 12);
     };
 
     if (!path_finding_config_.visualiser_playing)
     {
         if (ImGui::Begin("Tools"))
         {
-
             select_perspective_ui();
             ImGui::Separator();
 
@@ -384,6 +390,10 @@ void Application::draw_editor_ui()
 
             ImGui::Separator();
             sliders_ui();
+
+            ImGui::Separator();
+            ImGui::Text("Left Click -> Place tile");
+            ImGui::Text("Right Click -> Remove tile");
         }
         ImGui::End();
     }
@@ -417,9 +427,9 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
     {
         if (ImGui::Begin("Pathing Controls"))
         {
-
-            ImGui::SliderInt("Exploring Speed", &path_finding_config_.tickrate_searching, 1, 1000);
-            ImGui::SliderInt("Pathing Speed", &path_finding_config_.tickrate_pathing, 1, 1000);
+            ImGui::Text("Speeds");
+            ImGui::SliderInt("Searching", &path_finding_config_.tickrate_searching, 1, 1000);
+            ImGui::SliderInt("Pathing", &path_finding_config_.tickrate_pathing, 1, 1000);
             // ImGui::SliderInt("Following Speed", &path_finding_config_.tickrate_following, 1,
             // 1000);
 
@@ -441,11 +451,12 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
 
     if (ImGui::Begin("Config"))
     {
-        if (ImGui::Button("Show/Hide costs"))
+        if (ImGui::Checkbox("Show/Hide costs", &path_finding_config_.draw_costs))
         {
             path_finding_grid_.create_pathing_graph(tile_map, tile_map_kind_);
-            path_finding_config_.draw_costs = !path_finding_config_.draw_costs;
         }
+
+        ImGui::Checkbox("Show/Hide Grid", &path_finding_config_.draw_grid);
 
         for (auto& result : path_finding_results_)
         {
@@ -490,8 +501,10 @@ void Application::display_add_or_remove_algorithm_gui()
         {
             option.is_added = true;
             path_finding_grid_.create_pathing_graph(*p_active_tile_map_, tile_map_kind_);
-            path_finding_results_.emplace_back(
+            auto& result_state = path_finding_results_.emplace_back(
                 option.algorithm(path_finding_grid_, *start, *finish), follower_sprite_);
+            result_state.get_visual_config().path_colour = option.path_colour;
+            result_state.get_visual_config().visited_colour = option.visited_colour;
         }
     }
 
@@ -501,43 +514,34 @@ void Application::display_add_or_remove_algorithm_gui()
     if (!path_finding_results_.empty())
     {
         ImGui::Text("Current Queued");
-
-        if (ImGui::BeginTable("queue", 2))
+        for (auto& option : pathfinding_algorithms_)
         {
-            for (auto& option : pathfinding_algorithms_)
+            if (option.is_added)
             {
-                if (option.is_added)
+                ImGui::Text("%s", option.name);
+                ImGui::SameLine();
+                ImGui::PushID(option.name);
+                if (ImGui::Button("-"))
                 {
-                    ImGui::TableNextRow();
+                    option.is_added = false;
 
-                    ImGui::TableNextColumn();
-                    ImGui::Text("%s", option.name);
-
-                    ImGui::TableNextColumn();
-                    ImGui::PushID(option.name);
-                    if (ImGui::Button("-"))
+                    for (auto itr = path_finding_results_.begin();
+                         itr != path_finding_results_.end();)
                     {
-                        option.is_added = false;
-
-                        for (auto itr = path_finding_results_.begin();
-                             itr != path_finding_results_.end();)
+                        if (option.type == itr->get_type())
                         {
-                            if (option.type == itr->get_type())
-                            {
-                                itr = path_finding_results_.erase(itr);
-                            }
-                            else
-                            {
-                                ++itr;
-                            }
+                            itr = path_finding_results_.erase(itr);
+                        }
+                        else
+                        {
+                            ++itr;
                         }
                     }
-                    ImGui::PopID();
                 }
+                ImGui::PopID();
             }
-
-            ImGui::EndTable();
         }
+
         if (ImGui::Button("Start"))
         {
             path_finding_config_.visualiser_playing = true;

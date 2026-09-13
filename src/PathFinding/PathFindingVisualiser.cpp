@@ -35,12 +35,16 @@ void PathFindingVisualiser::set_state(sf::Vector2i& tile_position, PathFindingSt
     }
 }
 
-void PathFindingVisualiser::draw(sf::RenderTarget& render_target)
+void PathFindingVisualiser::draw_visited(sf::RenderTarget& render_target)
 {
     if (config.render_visited_tiles)
     {
         visited_tiles_.draw(render_target);
     }
+}
+
+void PathFindingVisualiser::draw_path(sf::RenderTarget& render_target)
+{
     if (config.render_pathing_tiles)
     {
         path_tiles_.draw(render_target);

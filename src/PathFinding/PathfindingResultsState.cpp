@@ -15,6 +15,17 @@ namespace
         ImGui::Text(label, so_far, total);
         ImGui::ProgressBar(static_cast<float>(so_far) / static_cast<float>(total));
     }
+
+    ImVec4 to_normalised_colour(sf::Color colour)
+    {
+        return {
+            static_cast<float>(colour.r) / 255.0f,
+            static_cast<float>(colour.g) / 255.0f,
+            static_cast<float>(colour.b) / 255.0f,
+            static_cast<float>(colour.a) / 255.0f,
+        };
+    }
+
 } // namespace
 
 PathFindingResultsState::PathFindingResultsState(const PathFindingResult& result,
@@ -92,14 +103,18 @@ void PathFindingResultsState::fixed_update(sf::Time dt)
     }
 }
 
-void PathFindingResultsState::render_tile_layers(sf::RenderWindow& window)
+void PathFindingResultsState::draw_visited(sf::RenderWindow& window)
 {
-    path_finding_visualiser_.draw(window);
+    path_finding_visualiser_.draw_visited(window);
 }
 
-void PathFindingResultsState::render_follower(sf::RenderWindow& window)
+void PathFindingResultsState::draw_path(sf::RenderWindow& window)
 {
+    path_finding_visualiser_.draw_path(window);
+}
 
+void PathFindingResultsState::draw_follower(sf::RenderWindow& window)
+{
     if (visualisation_state_ == VisualisationState::Following ||
         visualisation_state_ == VisualisationState::FollowingDone)
     {
@@ -111,6 +126,20 @@ void PathFindingResultsState::results_gui()
 {
     ImGui::Separator();
     ImGui::Text("%s Results", path_finding_result_.name.c_str());
+
+    ImGui::PushID(path_finding_result_.name.c_str());
+    ImGui::BeginDisabled();
+    ImGui::Text("Visited Tiles Colour:");
+    ImGui::SameLine();
+    ImGui::ColorButton("Visited Colour:",
+                       to_normalised_colour(path_finding_visualiser_.config.visited_colour));
+
+    ImGui::Text("Path Colour:");
+    ImGui::SameLine();
+    ImGui::ColorButton("Path Colour",
+                       to_normalised_colour(path_finding_visualiser_.config.path_colour));
+    ImGui::EndDisabled();
+    ImGui::PopID();
     draw_progress_bar("Search Progress: %d/%d tiles", stats_.visited_count,
                       path_finding_result_.visited.size());
 
@@ -179,4 +208,9 @@ const char* PathFindingResultsState::get_name() const
 AlgorithmType PathFindingResultsState::get_type() const
 {
     return path_finding_result_.type;
+}
+
+PathFindingVisualiserConfig& PathFindingResultsState::get_visual_config()
+{
+    return path_finding_visualiser_.config;
 }
