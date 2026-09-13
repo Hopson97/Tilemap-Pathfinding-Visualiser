@@ -8,6 +8,8 @@ PathFindingResult breadth_first_search(const PathFindingCostGrid& grid, const sf
                                        const sf::Vector2i& finish)
 {
     PathFindingResult result{{start, grid.get_cost(start)}, {finish, grid.get_cost(finish)}};
+    result.name = "Breadth First Search";
+    result.type = AlgorithmType::BreadthFirstSearch;
 
     // The current queue of tiles to next be processed
     std::deque<PathfindingNode> queue;

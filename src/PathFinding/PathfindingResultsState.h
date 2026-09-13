@@ -14,7 +14,7 @@ struct PathFindingStats
     int path_created_length = 0;
 
     // The actual total cost of the path
-    int total_path_length = 0;
+    size_t total_path_length = 0;
     int total_path_cost = 0;
 };
 
@@ -29,18 +29,22 @@ enum class VisualisationState
 struct PathFindingResultsState
 {
   public:
-    PathFindingResultsState(const PathFindingResult& result);
+    PathFindingResultsState(const PathFindingResult& result, sf::RectangleShape& follower_sprite);
 
-    void on_update(sf::Time dt);
-    void on_fixed_update(sf::Time dt);
-    void on_render(sf::RenderWindow& window);
+    void update(sf::Time dt);
+    void fixed_update(sf::Time dt);
+    void render_tile_layers(sf::RenderWindow& window);
+    void render_follower(sf::RenderWindow& window);
 
-    void gui();
+    void results_gui();
+    void config_gui();
 
     bool has_finished_current() const;
     void begin_next_stage();
 
     const VisualisationState get_visualisation_state() const;
+    const char* get_name() const;
+    AlgorithmType get_type() const;
 
   private:
     // The actual result from the path finding algorithm

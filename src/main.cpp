@@ -24,7 +24,6 @@ int main()
     sf::RenderWindow window(sf::VideoMode({1600, 900}),
                             "Path Finding Visualiser - Press F1 for debug - Press F2 to hide grid");
     window.setVerticalSyncEnabled(true);
-    window.setActive(true);
 
     if (!ImGui::SFML::Init(window, true))
     {

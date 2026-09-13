@@ -17,9 +17,11 @@ namespace
     }
 } // namespace
 
-PathFindingResultsState::PathFindingResultsState(const PathFindingResult& result)
+PathFindingResultsState::PathFindingResultsState(const PathFindingResult& result,
+                                                 sf::RectangleShape& follower_sprite)
     : path_finding_result_{result}
     , path_finding_result_current_{result}
+    , follower_(follower_sprite)
 {
     if (result.finish_found)
     {
@@ -34,7 +36,7 @@ PathFindingResultsState::PathFindingResultsState(const PathFindingResult& result
                         [](auto sum, const auto& node) { return sum + node.cost; });
 }
 
-void PathFindingResultsState::on_update(sf::Time dt)
+void PathFindingResultsState::update(sf::Time dt)
 {
 
     if (visualisation_state_ == VisualisationState::Following)
@@ -47,7 +49,7 @@ void PathFindingResultsState::on_update(sf::Time dt)
     }
 }
 
-void PathFindingResultsState::on_fixed_update(sf::Time dt)
+void PathFindingResultsState::fixed_update(sf::Time dt)
 {
 
     switch (visualisation_state_)
@@ -90,9 +92,13 @@ void PathFindingResultsState::on_fixed_update(sf::Time dt)
     }
 }
 
-void PathFindingResultsState::on_render(sf::RenderWindow& window)
+void PathFindingResultsState::render_tile_layers(sf::RenderWindow& window)
 {
     path_finding_visualiser_.draw(window);
+}
+
+void PathFindingResultsState::render_follower(sf::RenderWindow& window)
+{
 
     if (visualisation_state_ == VisualisationState::Following ||
         visualisation_state_ == VisualisationState::FollowingDone)
@@ -101,21 +107,32 @@ void PathFindingResultsState::on_render(sf::RenderWindow& window)
     }
 }
 
-void PathFindingResultsState::gui()
+void PathFindingResultsState::results_gui()
 {
-
+    ImGui::Separator();
+    ImGui::Text("%s Results", path_finding_result_.name.c_str());
     draw_progress_bar("Search Progress: %d/%d tiles", stats_.visited_count,
                       path_finding_result_.visited.size());
 
     if (stats_.visited_count == path_finding_result_.visited.size())
     {
         ImGui::Text("Path Found: %s", path_finding_result_.finish_found ? "Yes" : "No");
-        ImGui::Separator();
+
         draw_progress_bar("Creating path: %d/%d path tiles", stats_.path_created_length,
                           stats_.total_path_length);
         draw_progress_bar("Path cost so far: %d/%d", stats_.path_created_cost,
                           stats_.total_path_cost);
     }
+}
+
+void PathFindingResultsState::config_gui()
+{
+    ImGui::Separator();
+    ImGui::Text("%s Config", path_finding_result_.name.c_str());
+    ImGui::PushID(path_finding_result_.name.c_str());
+    ImGui::Checkbox("Draw Visited Tiles", &path_finding_visualiser_.config.render_visited_tiles);
+    ImGui::Checkbox("Draw Path Tiles", &path_finding_visualiser_.config.render_pathing_tiles);
+    ImGui::PopID();
 }
 
 bool PathFindingResultsState::has_finished_current() const
@@ -152,4 +169,14 @@ void PathFindingResultsState::begin_next_stage()
 const VisualisationState PathFindingResultsState::get_visualisation_state() const
 {
     return visualisation_state_;
+}
+
+const char* PathFindingResultsState::get_name() const
+{
+    return path_finding_result_.name.c_str();
+}
+
+AlgorithmType PathFindingResultsState::get_type() const
+{
+    return path_finding_result_.type;
 }

@@ -37,6 +37,17 @@ struct PathFindingConfig
     int tickrate_pathing = 5;
 };
 
+using PathFindingAlgorithmFunction = PathFindingResult (*)(const PathFindingCostGrid&,
+                                                           const sf::Vector2i&,
+                                                           const sf::Vector2i&);
+struct PathFindingAlgorithmOption
+{
+    PathFindingAlgorithmFunction algorithm;
+    const char* name;
+    AlgorithmType type;
+    bool is_added = false;
+};
+
 class Application
 {
   public:
@@ -51,12 +62,12 @@ class Application
     void save_tile_maps();
 
   private:
-    void add_visualiser(const PathFindingResult& result);
-
     void set_tile_map_kind(TileMapKind kind);
     void set_selected_tile(TileId selection);
     void draw_editor_ui();
     void draw_pathfinding_ui(TimeStep& timestep);
+
+    void display_add_or_remove_algorithm_gui();
 
     /// Gets the brush size, either will be the editor one or 1 if the tile is "special"
     sf::Vector2i get_brush_size();
@@ -79,6 +90,13 @@ class Application
     PathFindingCostGrid path_finding_grid_;
     PathFindingConfig path_finding_config_;
 
+    bool is_playing_ = false;
+
+    std::vector<PathFindingAlgorithmOption> pathfinding_algorithms_;
+
     // The actual result from the path finding algorithm
     std::vector<PathFindingResultsState> path_finding_results_;
+
+    sf::Texture follower_texture_;
+    sf::RectangleShape follower_sprite_;
 };

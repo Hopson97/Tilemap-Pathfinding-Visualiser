@@ -74,6 +74,6 @@ class Array2D
     std::vector<T> data_;
 
   public:
-    const size_t WIDTH;
-    const size_t HEIGHT;
+    size_t WIDTH;
+    size_t HEIGHT;
 };

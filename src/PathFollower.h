@@ -25,7 +25,7 @@ struct PositionLerper
 class PathFollower
 {
   public:
-    PathFollower();
+    PathFollower(sf::RectangleShape& sprite);
 
     void follow_path(const std::deque<PathfindingNode>& path);
 
@@ -38,9 +38,8 @@ class PathFollower
     void begin_next_move();
 
     sf::Vector2f front_position();
-
-    sf::Texture texture_;
-    sf::RectangleShape sprite_;
+    sf::RectangleShape* sprite_ = nullptr;
+    sf::Vector2f follower_position_{};
     std::deque<PathfindingNode> path_;
 
     PositionLerper lerper_;

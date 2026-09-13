@@ -32,6 +32,8 @@ PathFindingResult dijkstra_algorithm(const PathFindingCostGrid& grid, const sf::
                                      const sf::Vector2i& finish)
 {
     PathFindingResult result{{start, grid.get_cost(start)}, {finish, grid.get_cost(finish)}};
+    result.name = "Dijkstra's Algorithm";
+    result.type = AlgorithmType::DijkstrasAlgorithm;
 
     // The current queue of tiles to next be processed,
     std::priority_queue<DijkstraPathingNode, std::vector<DijkstraPathingNode>,

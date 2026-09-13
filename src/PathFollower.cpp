@@ -28,35 +28,34 @@ bool PositionLerper::is_done() const
     return elapsed >= duration;
 }
 
-PathFollower::PathFollower()
-    : texture_{"assets/Textures/Character.png"}
-    , sprite_({TILE_SIZE, TILE_SIZE * 2})
+PathFollower::PathFollower(sf::RectangleShape& sprite)
+    : sprite_(&sprite)
 {
-    sprite_.setTexture(&texture_);
 }
 
 void PathFollower::follow_path(const std::deque<PathfindingNode>& path)
 {
     path_ = path;
     std::reverse(path_.begin(), path_.end());
-    sprite_.setPosition(front_position());
+    follower_position_ = front_position();
     lerper_ = PositionLerper{};
 }
 
 void PathFollower::update(sf::Time dt)
 {
-    sprite_.setPosition(lerper_.lerp(dt));
+    follower_position_ = lerper_.lerp(dt);
 
     if (lerper_.is_done())
     {
-        sprite_.setPosition(lerper_.end);
+        follower_position_ = lerper_.end;
         begin_next_move();
     }
 }
 
 void PathFollower::draw(sf::RenderWindow& window)
 {
-    window.draw(sprite_);
+    sprite_->setPosition(follower_position_);
+    window.draw(*sprite_);
 }
 
 bool PathFollower::finished() const

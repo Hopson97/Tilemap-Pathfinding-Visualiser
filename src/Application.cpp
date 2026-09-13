@@ -24,7 +24,11 @@ Application::Application(const sf::RenderWindow& window)
     , tile_map_side_view_("assets/TileMaps/side_view_tiles_config.json")
     , tile_map_top_view_("assets/TileMaps/top_view_tiles_config.json")
     , placement_preview_({TILE_SIZE, TILE_SIZE})
+
+    , follower_texture_{"assets/Textures/Character.png"}
+    , follower_sprite_({TILE_SIZE, TILE_SIZE * 2})
 {
+    follower_sprite_.setTexture(&follower_texture_);
     camera_.view.setCenter({TILE_SIZE * TILE_MAP_WIDTH / 2 + TILE_SIZE / 2,
                             TILE_SIZE * TILE_MAP_HEIGHT / 2 + TILE_SIZE / 2});
     set_tile_map_kind(TileMapKind::TopDownView);
@@ -32,6 +36,19 @@ Application::Application(const sf::RenderWindow& window)
 
     tile_map_side_view_.load(DEFAULT_SIDE_VIEW_FILE);
     tile_map_top_view_.load(DEFAULT_TOP_VIEW_FILE);
+
+    pathfinding_algorithms_ = {
+        PathFindingAlgorithmOption{
+            .algorithm = breadth_first_search,
+            .name = "Breadth First Search",
+            .type = AlgorithmType::BreadthFirstSearch,
+        },
+        PathFindingAlgorithmOption{
+            .algorithm = dijkstra_algorithm,
+            .name = "Dijkstra's Algorithm",
+            .type = AlgorithmType::DijkstrasAlgorithm,
+        },
+    };
 }
 
 void Application::on_event(const sf::Event& e)
@@ -56,9 +73,9 @@ void Application::on_event(const sf::Event& e)
                     {
                         tile_map.set_tile(current_tile_position + sf::Vector2i{x, y},
                                           editor_config_.selected_tile);
-                        path_finding_config_.draw_costs = false;
                     }
                 }
+                path_finding_grid_.create_pathing_graph(tile_map, tile_map_kind_);
             }
             else if (is_mouse_down && button_pressed == sf::Mouse::Button::Right)
             {
@@ -67,9 +84,9 @@ void Application::on_event(const sf::Event& e)
                     for (int x = 0; x < brush_size.x; x++)
                     {
                         tile_map.remove_tile(current_tile_position + sf::Vector2i{x, y});
-                        path_finding_config_.draw_costs = false;
                     }
                 }
+                path_finding_grid_.create_pathing_graph(tile_map, tile_map_kind_);
             }
         }
     };
@@ -133,7 +150,7 @@ void Application::on_update(const Keyboard& keyboard, sf::Time dt)
 
     for (auto& result : path_finding_results_)
     {
-        result.on_update(dt);
+        result.update(dt);
     }
 }
 
@@ -149,7 +166,7 @@ void Application::on_fixed_update(sf::Time dt)
     bool all_ready_for_next_stage = true;
     for (auto& result : path_finding_results_)
     {
-        result.on_fixed_update(dt);
+        result.fixed_update(dt);
 
         if (!result.has_finished_current())
         {
@@ -184,7 +201,7 @@ void Application::on_render(sf::RenderWindow& window)
         grid_.draw(window);
     }
 
-    // Draw the preview
+    // Draw the preview for the user's selected tile.
     if (!ImGui::GetIO().WantCaptureMouse && !path_finding_config_.visualiser_playing)
     {
         auto current_preview_position = placement_preview_.getPosition();
@@ -201,15 +218,19 @@ void Application::on_render(sf::RenderWindow& window)
         placement_preview_.setPosition(current_preview_position);
     }
 
-    // Draw the pathfinding visualation
     if (path_finding_config_.draw_costs)
     {
         path_finding_grid_.draw(window);
     }
-
+        
+    // Ensure the followers are rendered on top of the visualisation grid
     for (auto& result : path_finding_results_)
     {
-        result.on_render(window);
+        result.render_tile_layers(window);
+    }
+    for (auto& result : path_finding_results_)
+    {
+        result.render_follower(window);
     }
 }
 
@@ -237,14 +258,6 @@ void Application::save_tile_maps()
     tile_map_top_view_.save("./data/default_top_view_map.txt");
 }
 
-void Application::add_visualiser(const PathFindingResult& result)
-{
-
-    path_finding_config_.draw_costs = false;
-    path_finding_config_.visualiser_playing = true;
-    path_finding_results_.emplace_back(result);
-}
-
 void Application::set_tile_map_kind(TileMapKind map_kind)
 {
     switch (map_kind)
@@ -265,8 +278,7 @@ void Application::set_tile_map_kind(TileMapKind map_kind)
     tile_map_kind_ = map_kind;
     set_selected_tile(0);
 
-    path_finding_config_.draw_costs = false;
-    path_finding_grid_.clear_all();
+    path_finding_grid_.create_pathing_graph(*p_active_tile_map_, tile_map_kind_);
 }
 
 void Application::set_selected_tile(TileId selection)
@@ -359,14 +371,11 @@ void Application::draw_editor_ui()
         ImGui::SliderInt("Y Size", &editor_config_.brush_size.y, 1, 12);
     };
 
-    if (ImGui::Begin("Tools"))
+    if (!path_finding_config_.visualiser_playing)
     {
-        if (path_finding_config_.visualiser_playing)
+        if (ImGui::Begin("Tools"))
         {
-            ImGui::Text("Editing is disabled in pathfinding");
-        }
-        else
-        {
+
             select_perspective_ui();
             ImGui::Separator();
 
@@ -376,8 +385,8 @@ void Application::draw_editor_ui()
             ImGui::Separator();
             sliders_ui();
         }
+        ImGui::End();
     }
-    ImGui::End();
 }
 
 void Application::draw_pathfinding_ui(TimeStep& timestep)
@@ -387,65 +396,60 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
     auto start = tile_map.start_position();
     auto finish = tile_map.finish_position();
 
-    if (ImGui::Begin("Path Finding"))
+    if (!path_finding_config_.visualiser_playing)
     {
-        if (ImGui::Button("Show costs"))
+        if (ImGui::Begin("Pathfinding Algorithm Selector"))
+        {
+            if (start && finish)
+            {
+                display_add_or_remove_algorithm_gui();
+            }
+            else
+            {
+                ImGui::Text("Please place a START and FINISH to");
+                ImGui::Text("enable the pathfinding.");
+            }
+        }
+        ImGui::End();
+    }
+
+    if (path_finding_config_.visualiser_playing)
+    {
+        if (ImGui::Begin("Pathing Controls"))
+        {
+
+            ImGui::SliderInt("Exploring Speed", &path_finding_config_.tickrate_searching, 1, 1000);
+            ImGui::SliderInt("Pathing Speed", &path_finding_config_.tickrate_pathing, 1, 1000);
+            // ImGui::SliderInt("Following Speed", &path_finding_config_.tickrate_following, 1,
+            // 1000);
+
+            if (path_finding_config_.visualiser_playing)
+            {
+                if (ImGui::Button("Stop"))
+                {
+                    path_finding_config_.visualiser_playing = false;
+                }
+
+                for (auto& result : path_finding_results_)
+                {
+                    result.results_gui();
+                }
+            }
+        }
+        ImGui::End();
+    }
+
+    if (ImGui::Begin("Config"))
+    {
+        if (ImGui::Button("Show/Hide costs"))
         {
             path_finding_grid_.create_pathing_graph(tile_map, tile_map_kind_);
-            path_finding_config_.draw_costs = true;
-        }
-        if (path_finding_config_.draw_costs && ImGui::Button("Hide costs"))
-        {
-            path_finding_config_.draw_costs = false;
+            path_finding_config_.draw_costs = !path_finding_config_.draw_costs;
         }
 
-        ImGui::Separator();
-
-        if (start && finish)
+        for (auto& result : path_finding_results_)
         {
-            if (ImGui::Button("Breadth First Search"))
-            {
-                path_finding_grid_.create_pathing_graph(tile_map, tile_map_kind_);
-                path_finding_results_.clear();
-                add_visualiser(breadth_first_search(path_finding_grid_, *start, *finish));
-            }
-
-            if (ImGui::Button("Dijkstra's algorithm"))
-            {
-                path_finding_grid_.create_pathing_graph(tile_map, tile_map_kind_);
-                path_finding_results_.clear();
-                add_visualiser(dijkstra_algorithm(path_finding_grid_, *start, *finish));
-            }
-        }
-        else
-        {
-            ImGui::Text("Please place a START and FINISH to");
-            ImGui::Text("enable the pathfinding.");
-        }
-    }
-    ImGui::End();
-
-    if (ImGui::Begin("Pathing Controls"))
-    {
-
-        ImGui::SliderInt("Exploring Speed", &path_finding_config_.tickrate_searching, 1, 1000);
-        ImGui::SliderInt("Pathing Speed", &path_finding_config_.tickrate_pathing, 1, 1000);
-        // ImGui::SliderInt("Following Speed", &path_finding_config_.tickrate_following, 1, 1000);
-
-        if (path_finding_config_.visualiser_playing)
-        {
-            if (ImGui::Button("Stop"))
-            {
-                path_finding_config_.draw_costs = false;
-                path_finding_config_.visualiser_playing = false;
-
-                path_finding_results_.clear();
-            }
-
-            for (auto& result : path_finding_results_)
-            {
-                result.gui();
-            }
+            result.config_gui();
         }
     }
     ImGui::End();
@@ -470,6 +474,74 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
         default:
             // timestep.set_tick_rate(path_finding_config_.tickrate_following);
             break;
+    }
+}
+
+void Application::display_add_or_remove_algorithm_gui()
+{
+    auto start = p_active_tile_map_->start_position();
+    auto finish = p_active_tile_map_->finish_position();
+
+    // GUI to add a algorithm to the comparison. Clicking the buttons runs the algorithms
+    // immediately via the function pointer.
+    for (auto& option : pathfinding_algorithms_)
+    {
+        if (!option.is_added && ImGui::Button(std::format("Add {}", option.name).c_str()))
+        {
+            option.is_added = true;
+            path_finding_grid_.create_pathing_graph(*p_active_tile_map_, tile_map_kind_);
+            path_finding_results_.emplace_back(
+                option.algorithm(path_finding_grid_, *start, *finish), follower_sprite_);
+        }
+    }
+
+    ImGui::Separator();
+
+    // GUI to remove them from the comparison
+    if (!path_finding_results_.empty())
+    {
+        ImGui::Text("Current Queued");
+
+        if (ImGui::BeginTable("queue", 2))
+        {
+            for (auto& option : pathfinding_algorithms_)
+            {
+                if (option.is_added)
+                {
+                    ImGui::TableNextRow();
+
+                    ImGui::TableNextColumn();
+                    ImGui::Text("%s", option.name);
+
+                    ImGui::TableNextColumn();
+                    ImGui::PushID(option.name);
+                    if (ImGui::Button("-"))
+                    {
+                        option.is_added = false;
+
+                        for (auto itr = path_finding_results_.begin();
+                             itr != path_finding_results_.end();)
+                        {
+                            if (option.type == itr->get_type())
+                            {
+                                itr = path_finding_results_.erase(itr);
+                            }
+                            else
+                            {
+                                ++itr;
+                            }
+                        }
+                    }
+                    ImGui::PopID();
+                }
+            }
+
+            ImGui::EndTable();
+        }
+        if (ImGui::Button("Start"))
+        {
+            path_finding_config_.visualiser_playing = true;
+        }
     }
 }
 

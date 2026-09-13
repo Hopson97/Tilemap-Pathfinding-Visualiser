@@ -32,6 +32,13 @@ struct ComparePathfindingNodeCosts
     }
 };
 
+enum class AlgorithmType
+{
+    Unknown,
+    BreadthFirstSearch,
+    DijkstrasAlgorithm,
+};
+
 struct PathFindingResult
 {
     PathFindingResult() = default;
@@ -52,6 +59,9 @@ struct PathFindingResult
 
     PathfindingNode start;
     PathfindingNode finish;
+
+    std::string name;
+    AlgorithmType type = AlgorithmType::Unknown;
 };
 
 // All neighbour offsets (vertical, horizontal, and diagonal.
