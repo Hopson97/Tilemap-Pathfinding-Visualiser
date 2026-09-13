@@ -153,6 +153,7 @@
     <ClCompile Include="src\PathFinding\PathFindingCostGrid.cpp" />
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\PathFinding\PathfindingResultsState.cpp" />
     <ClCompile Include="src\PathFinding\PathFindingVisualiser.cpp" />
     <ClCompile Include="src\PathFollower.cpp" />
     <ClCompile Include="src\TileMap.cpp" />
@@ -178,6 +179,7 @@
     <ClInclude Include="src\PathFinding\PathFindingAlgorithms.h" />
     <ClInclude Include="src\PathFinding\PathFindingCostGrid.h" />
     <ClInclude Include="src\Application.h" />
+    <ClInclude Include="src\PathFinding\PathfindingResultsState.h" />
     <ClInclude Include="src\PathFinding\PathFindingVisualiser.h" />
     <ClInclude Include="src\PathFollower.h" />
     <ClInclude Include="src\TileMap.h" />

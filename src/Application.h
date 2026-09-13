@@ -7,9 +7,7 @@
 
 #include "PathFinding/PathFindingAlgorithms.h"
 #include "PathFinding/PathFindingCostGrid.h"
-#include "PathFinding/PathFindingVisualiser.h"
-
-#include "PathFollower.h"
+#include "PathFinding/PathfindingResultsState.h"
 #include "TileMap.h"
 #include "TileMapRenderer.h"
 
@@ -39,28 +37,6 @@ struct PathFindingConfig
     int tickrate_pathing = 5;
 };
 
-struct PathFindingStats
-{
-    // The number of tiles explored so far
-    int visited_count = 0;
-
-    // The cost of the path so far when creating the path
-    int path_created_cost = 0;
-    int path_created_length = 0;
-
-    // The actual total cost of the path
-    int total_path_length = 0;
-    int total_path_cost = 0;
-};
-
-enum class VisualisationState
-{
-    Searching,
-    Pathing,
-    Following,
-    FollowingDone,
-};
-
 class Application
 {
   public:
@@ -75,7 +51,7 @@ class Application
     void save_tile_maps();
 
   private:
-    void reset_visualiser(const PathFindingResult& result);
+    void add_visualiser(const PathFindingResult& result);
 
     void set_tile_map_kind(TileMapKind kind);
     void set_selected_tile(TileId selection);
@@ -102,20 +78,7 @@ class Application
 
     PathFindingCostGrid path_finding_grid_;
     PathFindingConfig path_finding_config_;
-    PathFindingVisualiser path_finding_visualiser_;
 
     // The actual result from the path finding algorithm
-    PathFindingResult path_finding_result_;
-    std::deque<PathfindingNode> final_path_;
-
-    // A copy of the result that is used to update the visualiser using FIFO to remove as
-    // visited/ pathing nodes are added to it.
-    PathFindingResult path_finding_result_current_;
-
-    PathFollower follower_;
-
-    PathFindingStats stats_;
-
-
-    VisualisationState visualisation_state_ = VisualisationState::Searching;
+    std::vector<PathFindingResultsState> path_finding_results_;
 };

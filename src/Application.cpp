@@ -17,14 +17,6 @@ namespace
 
     constexpr const char* DEFAULT_SIDE_VIEW_FILE = "./data/default_side_view_map.txt";
     constexpr const char* DEFAULT_TOP_VIEW_FILE = "./data/default_top_view_map.txt";
-
-    template <typename Stat, typename TotalType>
-    void draw_progress_bar(const char* label, Stat so_far, TotalType total)
-    {
-        ImGui::Text(label, so_far, total);
-        ImGui::ProgressBar(static_cast<float>(so_far) / static_cast<float>(total));
-    }
-
 } // namespace
 
 Application::Application(const sf::RenderWindow& window)
@@ -139,13 +131,9 @@ void Application::on_update(const Keyboard& keyboard, sf::Time dt)
     camera_.view.move(camera_.velocity * dt.asSeconds());
     camera_.velocity *= 0.95f;
 
-    if (visualisation_state_ == VisualisationState::Following)
+    for (auto& result : path_finding_results_)
     {
-        follower_.update(dt);
-        if (follower_.finished())
-        {
-            visualisation_state_ = VisualisationState::FollowingDone;
-        }
+        result.on_update(dt);
     }
 }
 
@@ -156,43 +144,25 @@ void Application::on_fixed_update(sf::Time dt)
         return;
     }
 
-    switch (visualisation_state_)
+    // To make the comparision work with the tick rate, and for better comparision, all added stages
+    // must complete before starting the next.
+    bool all_ready_for_next_stage = true;
+    for (auto& result : path_finding_results_)
     {
-        case VisualisationState::Searching:
-            if (!path_finding_result_current_.visited.empty())
-            {
-                // Each update, highlight the currently visited node, FIFO from the pathing
-                // algorithm
-                auto next = path_finding_result_current_.visited.front();
-                path_finding_result_current_.visited.pop_front();
-                path_finding_visualiser_.set_state(next, PathFindingState::Visited);
-                stats_.visited_count++;
-            }
-            else
-            {
-                visualisation_state_ = VisualisationState::Pathing;
-            }
-            break;
+        result.on_fixed_update(dt);
 
-        case VisualisationState::Pathing:
-            if (!final_path_.empty() && path_finding_result_current_.finish_found)
-            {
-                // Draw the path!
-                auto next = final_path_.front();
-                final_path_.pop_front();
-                path_finding_visualiser_.set_state(next.position, PathFindingState::Path);
+        if (!result.has_finished_current())
+        {
+            all_ready_for_next_stage = false;
+        }
+    }
 
-                stats_.path_created_cost += next.cost;
-                stats_.path_created_length++;
-            }
-            else
-            {
-                visualisation_state_ = VisualisationState::Following;
-            }
-            break;
-
-        default:
-            break;
+    if (all_ready_for_next_stage)
+    {
+        for (auto& result : path_finding_results_)
+        {
+            result.begin_next_stage();
+        }
     }
 }
 
@@ -237,13 +207,9 @@ void Application::on_render(sf::RenderWindow& window)
         path_finding_grid_.draw(window);
     }
 
-    // Draw the pathfinding result
-    path_finding_visualiser_.draw(window);
-
-    if (visualisation_state_ == VisualisationState::Following ||
-        visualisation_state_ == VisualisationState::FollowingDone)
+    for (auto& result : path_finding_results_)
     {
-        follower_.draw(window);
+        result.on_render(window);
     }
 }
 
@@ -271,27 +237,12 @@ void Application::save_tile_maps()
     tile_map_top_view_.save("./data/default_top_view_map.txt");
 }
 
-void Application::reset_visualiser(const PathFindingResult& result)
+void Application::add_visualiser(const PathFindingResult& result)
 {
-    visualisation_state_ = VisualisationState::Searching;
+
     path_finding_config_.draw_costs = false;
     path_finding_config_.visualiser_playing = true;
-
-    path_finding_result_ = result;
-    path_finding_result_current_ = result;
-    path_finding_visualiser_.clear();
-
-    if (result.finish_found)
-    {
-        final_path_ = result.create_path();
-        follower_.follow_path(final_path_);
-    }
-
-    stats_ = PathFindingStats{};
-    stats_.total_path_length = final_path_.size();
-    stats_.total_path_cost =
-        std::accumulate(final_path_.begin(), final_path_.end(), 0,
-                        [](auto sum, const auto& node) { return sum + node.cost; });
+    path_finding_results_.emplace_back(result);
 }
 
 void Application::set_tile_map_kind(TileMapKind map_kind)
@@ -452,17 +403,18 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
 
         if (start && finish)
         {
-
             if (ImGui::Button("Breadth First Search"))
             {
                 path_finding_grid_.create_pathing_graph(tile_map, tile_map_kind_);
-                reset_visualiser(breadth_first_search(path_finding_grid_, *start, *finish));
+                path_finding_results_.clear();
+                add_visualiser(breadth_first_search(path_finding_grid_, *start, *finish));
             }
 
             if (ImGui::Button("Dijkstra's algorithm"))
             {
                 path_finding_grid_.create_pathing_graph(tile_map, tile_map_kind_);
-                reset_visualiser(dijkstra_algorithm(path_finding_grid_, *start, *finish));
+                path_finding_results_.clear();
+                add_visualiser(dijkstra_algorithm(path_finding_grid_, *start, *finish));
             }
         }
         else
@@ -473,7 +425,7 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
     }
     ImGui::End();
 
-    if (ImGui::Begin("Player"))
+    if (ImGui::Begin("Pathing Controls"))
     {
 
         ImGui::SliderInt("Exploring Speed", &path_finding_config_.tickrate_searching, 1, 1000);
@@ -486,35 +438,26 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
             {
                 path_finding_config_.draw_costs = false;
                 path_finding_config_.visualiser_playing = false;
-                path_finding_visualiser_.clear();
-                visualisation_state_ = VisualisationState::Searching;
+
+                path_finding_results_.clear();
             }
 
-            draw_progress_bar("Search Progress: %d/%d tiles", stats_.visited_count,
-                              path_finding_result_.visited.size());
-
-            if (stats_.visited_count == path_finding_result_.visited.size())
+            for (auto& result : path_finding_results_)
             {
-                ImGui::Text("Path Found: %s", path_finding_result_.finish_found ? "Yes" : "No");
-                ImGui::Separator();
-                draw_progress_bar("Creating path: %d/%d path tiles", stats_.path_created_length,
-                                  stats_.total_path_length);
-                draw_progress_bar("Path cost so far: %d/%d", stats_.path_created_cost,
-                                  stats_.total_path_cost);
-            }
-        }
-        else
-        {
-            if (ImGui::Button("Clear"))
-            {
-                path_finding_config_.draw_costs = false;
-                path_finding_visualiser_.clear();
+                result.gui();
             }
         }
     }
     ImGui::End();
 
-    switch (visualisation_state_)
+    // Ensure the tick rate is set to whatever stage is still running
+    auto lowest_state = VisualisationState::Pathing;
+    for (auto& result : path_finding_results_)
+    {
+        lowest_state = static_cast<VisualisationState>(std::min(
+            static_cast<int>(lowest_state), static_cast<int>(result.get_visualisation_state())));
+    }
+    switch (lowest_state)
     {
         case VisualisationState::Searching:
             timestep.set_tick_rate(path_finding_config_.tickrate_searching);
@@ -522,7 +465,6 @@ void Application::draw_pathfinding_ui(TimeStep& timestep)
 
         case VisualisationState::Pathing:
             timestep.set_tick_rate(path_finding_config_.tickrate_pathing);
-
             break;
 
         default:
