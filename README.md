@@ -17,7 +17,11 @@ This also has a tile map editor to create obstacles and change the start and end
 
 **Dijkstra's Algorithm - Top View**
 
-![Top View](screenshots_gifs/dijkstra-top-view.gif)
+![Top View](screenshots_gifs/dijkstras.png)
+
+**Tile Costs**
+
+![Tile Costs](screenshots_gifs/tile-costs.png)
 
 
 ## Building and Running
