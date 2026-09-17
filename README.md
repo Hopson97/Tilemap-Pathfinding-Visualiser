@@ -1,4 +1,24 @@
-# PathFinding Visualistor
+# PathFinding Visualiser
+
+Program that visualises pathfinding algorithms on a tile map.
+
+This currently supports the following algorithms:
+
+- Breadth First Search
+- Dijkstra's Algorithm
+
+This also has a tile map editor to create obstacles and change the start and end points, for both a top-down and side view.
+
+## GIFs
+
+**Editor - Side View**
+
+![Side View](screenshots_gifs/side-tile-edit.gif)
+
+**Dijkstra's Algorithm - Top View**
+
+![Top View](screenshots_gifs/dijkstra-top-view.gif)
+
 
 ## Building and Running
 

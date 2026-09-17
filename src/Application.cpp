@@ -50,7 +50,7 @@ Application::Application(const sf::RenderWindow& window)
             .name = "Dijkstra's Algorithm",
             .type = AlgorithmType::DijkstrasAlgorithm,
             .visited_colour = {200, 205, 155, 128},
-            .path_colour = {0, 128, 255, 255},
+            .path_colour = {0, 128, 255, 128},
         },
     };
 }
